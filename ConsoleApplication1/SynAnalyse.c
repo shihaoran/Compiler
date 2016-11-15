@@ -152,10 +152,64 @@ int compound_statement()//复合语句
 {
 	if (sym == CONSTSYM)
 	{
+		const_declaration();
+	}
+	if (sym == INTSYM || sym == CHARSYM)
+	{
+		var_declaration();
+	}
+	while (statement()) {}
+	if (sym != RBPARENSYM)
+	{
+		error(WRONG_STATEMENT);
+		return 0;
+	}
+	return 1;
+}
+int statement()
+{
+	if (sym == IFSYM)
+	{
 
 	}
-}
+	else if (sym == WHILESYM)
+	{
 
+	}
+	else if (sym == LBPARENSYM)
+	{
+
+	}
+	else if (sym == IDSYM)
+	{
+		//TODO:有无返回值完全相同 这里不写函数
+	}
+	else if (sym == SCANFSYM)
+	{
+
+	}
+	else if (sym == PRINTFSYM)
+	{
+
+	}
+	else if (sym == SWITCHSYM)
+	{
+
+	}
+	else if (sym == RETURNSYM)
+	{
+
+	}
+	else if (sym == SEMICOLONSYM)
+	{
+
+	}
+	else
+	{
+		error(WRONG_STATEMENT);
+		return 0;
+	}
+}
 int program()
 {
 	sym = getsym();
