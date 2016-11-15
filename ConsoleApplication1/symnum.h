@@ -43,9 +43,11 @@ enum symtype
 	QUOTESYM,  // ¡±
 	ASSIGNSYM,  // =
 	DIGITC,  // Êý×Ö
+	DIGITC0,  // Êý×Ö0
 	LETTERC,  // ×ÖÄ¸
 	TABC,  // =
 	SPACEC,  // =
 	NEWLC,  // =
 	EXCLAMC,  // !
+	ZEROSYM, //0
 };

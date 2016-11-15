@@ -2,13 +2,130 @@
 #include "symnum.h"
 #include "error.h"
 int sym;
+int const_defination()//常量定义
+{
+	if (sym == INTSYM)
+	{
+		sym = getsym();
+		if (sym != IDSYM)
+		{
+			error(DECLARATION_SHOULD_HAVE_A_ID);
+		}
+		sym = getsym();
+		if (sym != ASSIGNSYM)
+		{
+			error(DECLARATION_HAVE_NO_EQL);
+		}
+		sym = getsym();
+		integer();
+		while (sym == COMMASYM)
+		{
+			sym = getsym();
+			if (sym != IDSYM)
+			{
+				error(DECLARATION_SHOULD_HAVE_A_ID);
+			}
+			sym = getsym();
+			if (sym != ASSIGNSYM)
+			{
+				error(DECLARATION_HAVE_NO_EQL);
+			}
+			sym = getsym();
+			integer();
+		}
+		return 1;
+	}
+	else if (sym==CHARSYM)
+	{
+		sym = getsym();
+		if (sym != IDSYM)
+		{
+			error(DECLARATION_SHOULD_HAVE_A_ID);
+		}
+		sym = getsym();
+		if (sym != ASSIGNSYM)
+		{
+			error(DECLARATION_HAVE_NO_EQL);
+		}
+		sym = getsym();
+		if (sym != CHSYM)
+		{
+			error(WRONG_ASSIGN_SYNTAX);
+		}
+		sym = getsym();
+		while (sym == COMMASYM)
+		{
+			sym = getsym();
+			if (sym != IDSYM)
+			{
+				error(DECLARATION_SHOULD_HAVE_A_ID);
+			}
+			sym = getsym();
+			if (sym != ASSIGNSYM)
+			{
+				error(DECLARATION_HAVE_NO_EQL);
+			}
+			sym = getsym();
+			if (sym != CHSYM)
+			{
+				error(WRONG_ASSIGN_SYNTAX);
+			}
+			sym = getsym();
+		}
+		return 1;
+	}
+	else
+	{
+		error(DECLARATION_IS_NOT_START_WITH_TYPE);
+		return 0;
+	}
+}
 int const_declaration()
+{
+	while (sym == CONSTSYM)
+	{
+		sym = getsym();
+		const_defination();
+		if (sym != SEMICOLONSYM)
+		{
+			error(MISSING_SEMICOLON);//TODO:退出
+			return 0;
+		}
+		else sym = getsym();
+	}
+	return 1;
+}
+int var_defination()
 {
 
 }
 int var_declaration()
 {
 
+}
+int integer()
+{
+	if (sym == PLUSSYM || sym == MINUSSYM)
+	{
+		sym = getsym();
+		if (sym != NUMSYM)
+		{
+			error(WRONG_FORMAT_INTEGER);
+			return 0;
+		}
+		sym = getsym();
+
+	}
+	else if (sym == ZEROSYM)
+	{
+		sym = getsym();
+		return 1;
+	}
+	else
+	{
+		error(WRONG_FORMAT_INTEGER);
+		return 0;
+	}
 }
 int void_func_defination()
 {
@@ -23,13 +140,20 @@ int main_func()//主函数
 		error(WRONG_HEAD);
 	sym = getsym();
 	if (sym != LBPARENSYM)
-		error(WRONG_HEAD);
+		error(PARENT_DISMATCH);
 	sym = getsym();
 	compound_statement();
+	if (sym != RBPARENSYM)
+		error(PARENT_DISMATCH);
+	sym = getsym();
+	return 1;
 }
 int compound_statement()//复合语句
 {
+	if (sym == CONSTSYM)
+	{
 
+	}
 }
 
 int program()
@@ -37,14 +161,7 @@ int program()
 	sym = getsym();
 	if (sym == CONSTSYM)//常量说明
 	{
-		while (sym == CONSTSYM)
-		{
-			sym = getsym();
-			const_declaration();
-			if (sym != SEMICOLONSYM)
-				error(MISSING_SEMICOLON);
-			else sym = getsym();
-		}
+		const_declaration();
 	}
 	if (sym == INTSYM || sym == CHARSYM || sym == VOIDSYM)//TODO:需要循环
 	{
@@ -54,7 +171,7 @@ int program()
 			if (sym == MAINSYM)
 			{
 				sym = getsym();
-				main_func();
+				main_func();//从(开始进入
 			}
 			else if (sym == IDSYM)
 			{

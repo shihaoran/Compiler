@@ -67,7 +67,8 @@ int isWhich(char c)
 	}
 	else
 	{
-		if (c <= '9'&&c >= '0')	return DIGITC; //TODO:整数不能0开头
+		if (c == '0')	return DIGITC0;
+		if (c <= '9'&&c >= '1')	return DIGITC; //TODO:整数不能0开头
 		if (c <= 'z'&&c >= 'a')	return LETTERC;
 		if (c <= 'Z'&&c >= 'A')	return LETTERC;
 		if (c == '_')			return LETTERC;
@@ -234,6 +235,17 @@ int getsym()
 		}
 		retract();
 		return reserveword();
+	case DIGITC0:
+		readch();
+		if (isWhich(ch) == DIGITC|| isWhich(ch) == DIGITC0)
+		{
+			retract();
+			error(WRONG_FORMAT_INTEGER);
+			return ZEROSYM;
+		}
+		retract();
+		gennum();
+		return ZEROSYM;
 	case DIGITC:
 		readch();
 		while (isWhich(ch) == DIGITC)
