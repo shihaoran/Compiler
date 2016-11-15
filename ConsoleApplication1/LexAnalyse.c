@@ -1,5 +1,4 @@
-#include<stdio.h>
-#include<string.h>
+#include "LexAnalyse.h"
 #include "symnum.h"
 
 
@@ -317,7 +316,7 @@ void printresult(int result,int i)
 	}
 }
 
-int main()
+int init()
 {
 	char path[512];
 	int result = 0;
@@ -325,12 +324,12 @@ int main()
 	printf("Path:");
 	scanf("%s", &path);
 	src = fopen(path, "r");
-	result = getsym();
+	/*result = getsym();
 	while (result != EOF)
 	{
 		printresult(result,i);
 		i++;
 		result=getsym();
 	}
-	scanf("%s", &path);
+	scanf("%s", &path);*/
 }

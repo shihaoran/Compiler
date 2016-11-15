@@ -1,5 +1,3 @@
-
-
 #define MAXTOKENLEN 128 // 
 enum symtype
 {
