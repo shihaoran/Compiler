@@ -18,5 +18,13 @@
     <ClCompile Include="LexAnalyse.c">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="SynAnalyse.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="symnum.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -1,54 +1,7 @@
 #include<stdio.h>
 #include<string.h>
-#define CONSTSYM 1
-#define INTSYM 2
-#define CHARSYM 3
-#define IFSYM 4
-#define ELSESYM 5
-#define WHILESYM 6
-#define SWITCHSYM 7
-#define CASESYM 47
-#define DEFAULTSYM 8
-#define MAINSYM 9
-#define VOIDSYM 10
-#define SCANFSYM 11
-#define PRINTFSYM 12
-#define RETURNSYM 13
-#define IDSYM 14
-#define STRSYM 15 // string
-#define STRC 46 // char
-#define CHSYM 45 // char
-#define NUMSYM 48 // char
-#define PLUSSYM 16 // +
-#define MINUSSYM 17 // -
-#define TIMESSYM 18 // *
-#define DIVSYM 19 // /
-#define LPARENSYM 20 // (
-#define RPARENSYM 21 // )
-#define LBPARENSYM 22 // {
-#define RBPARENSYM 23 // }
-#define LMPARENSYM 24 // [
-#define RMPARENSYM 25 // ]
-#define BIGTHSYM 26 // >
-#define SMALLTHSYM 27 // <
-#define NOTBTHSYM 28 // <=
-#define NOTSTHSYM 29 // >=
-#define EQLSYM 30 // ==
-#define NOTESYM 31 // !=
-#define COMMASYM 32 // ,
-#define SEMICOLONSYM 33 // ;
-#define COLONSYM 34 // :
-#define SQUOTESYM 35 // ¡®
-#define QUOTESYM 36 // ¡±
-#define ASSIGNSYM 37 // =
-#define DIGITC 38 // Êý×Ö
-#define LETTERC 39 // ×ÖÄ¸
-#define TABC 40 // =
-#define SPACEC 41 // =
-#define NEWLC 42 // =
-#define EXCLAMC 43 // !
+#include "symnum.h"
 
-#define MAXTOKENLEN 128 // =
 
 
 char token[MAXTOKENLEN];
@@ -58,7 +11,6 @@ int num;
 int line = 0;
 int strflag = 0;
 FILE *src;
-
 
 
 void clearToken()
