@@ -217,7 +217,7 @@ int getsym()
 		}
 	case NEWLC:
 		line++;
-		printf("%d\n", line);
+		//printf("%d\n", line);
 		return_int = getsym();
 		return return_int;
 	case SPACEC:
@@ -333,9 +333,9 @@ int init()
 	int result = 0;
 	int i = 1;
 	printf("Path:");
-	//scanf("%s", path);
-	//src = fopen(path, "r");
-	src = fopen("C:\\test.c", "r");
+	scanf("%s", path);
+	src = fopen(path, "r");
+	//src = fopen("C:\\test.c", "r");
 	/*result = getsym();
 	while (result != EOF)
 	{

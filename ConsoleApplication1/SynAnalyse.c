@@ -3,6 +3,7 @@
 #include "symnum.h"
 #include "error.h"
 int sym;
+extern int line;
 int const_defination()//常量定义
 {
 	if (sym == INTSYM)
@@ -38,6 +39,7 @@ int const_defination()//常量定义
 			sym = getsym();
 			integer();
 		}
+		printf("Line:%d --This is a const_defination_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym==CHARSYM)
@@ -83,6 +85,7 @@ int const_defination()//常量定义
 			}
 			sym = getsym();
 		}
+		printf("Line:%d --This is a const_defination_statement!\n", line+1);
 		return 1;
 	}
 	else
@@ -139,6 +142,7 @@ int var_defination_backend()
 {
 	if (sym == SEMICOLONSYM)
 	{
+		printf("Line:%d --This is a var_defination_statement!\n", line+1);
 		return 1;
 	}
 	else if(sym!=COMMASYM)//如果是分号（空）或者逗号
@@ -172,6 +176,7 @@ int var_defination_backend()
 			sym = getsym();
 		}
 	}
+	printf("Line:%d --This is a var_defination_statement!\n", line+1);
 	return 1;
 }
 int var_declaration()
@@ -324,6 +329,7 @@ int void_func_defination()
 		error(ERROR_PARAMETER);
 		return 0;
 	}
+	printf("Line:%d --This is a void_function_defination_statement!\n", line + 1);
 	sym = getsym();
 	if (sym != LBPARENSYM)
 	{
@@ -365,6 +371,7 @@ int return_func_defination_backend()
 		error(ERROR_PARAMETER);
 		return 0;
 	}
+	printf("Line:%d --This is a return_function_defination_statement!\n", line + 1);
 	sym = getsym();
 	if (sym != LBPARENSYM)
 	{
@@ -394,6 +401,7 @@ int main_func()//主函数,void main前面判断过了
 		error(WRONG_HEAD);
 		return 0;
 	}
+	printf("Line:%d --This is a main_function_defination_statement!\n", line + 1);
 	sym = getsym();
 	if (sym != LBPARENSYM)
 	{
@@ -442,6 +450,7 @@ int statement()
 		{
 			return 0;
 		}
+		printf("Line:%d --This is an if_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym == WHILESYM)
@@ -450,6 +459,7 @@ int statement()
 		{
 			return 0;
 		}
+		printf("Line:%d --This is a while_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym == LBPARENSYM)//TODO：检查一下
@@ -465,6 +475,7 @@ int statement()
 			error(BRACE_DISMATCH);
 			return 0;
 		}
+		printf("Line:%d --This is a statement list!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -491,6 +502,7 @@ int statement()
 				error(MISSING_SEMICOLON);
 				return 0;
 			}
+			printf("Line:%d --This is a function_call_statement!\n", line+1);
 		}
 		else if (sym == ASSIGNSYM)//赋值语句1
 		{
@@ -504,6 +516,7 @@ int statement()
 				error(MISSING_SEMICOLON);
 				return 0;
 			}
+			printf("Line:%d --This is an assign_statement!\n", line+1);
 		}
 		else if (sym == LMPARENSYM)//赋值语句数组
 		{
@@ -533,6 +546,7 @@ int statement()
 				error(MISSING_SEMICOLON);
 				return 0;
 			}
+			printf("Line:%d --This is an assign_statement!\n", line+1);
 		}
 		else
 		{
@@ -553,6 +567,7 @@ int statement()
 			error(MISSING_SEMICOLON);
 			return 0;
 		}
+		printf("Line:%d --This is a scanf_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -567,6 +582,7 @@ int statement()
 			error(MISSING_SEMICOLON);
 			return 0;
 		}
+		printf("Line:%d --This is a printf_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -576,6 +592,7 @@ int statement()
 		{
 			return 0;
 		}
+		printf("Line:%d --This is a switch_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym == RETURNSYM)
@@ -589,11 +606,13 @@ int statement()
 			error(MISSING_SEMICOLON);
 			return 0;
 		}
+		printf("Line:%d --This is a return_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
 	else if (sym == SEMICOLONSYM)
 	{
+		printf("Line:%d --This is an empty_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
