@@ -107,11 +107,70 @@ int const_declaration()
 }
 int var_defination()
 {
-
+	if (!head())
+	{
+		error(WRONG_HEAD);
+		return 0;
+	}
+	if (sym == LMPARENSYM)
+	{
+		sym = getsym();
+		if (sym != NUMSYM)
+		{
+			error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
+			return 0;
+		}
+		sym = getsym();
+		if (sym != RMPARENSYM)
+		{
+			error(PARENT_DISMATCH);
+			return 0;
+		}
+		sym = getsym();
+	}
+	if (!var_defination_backend())
+	{
+		return 0;
+	}
+	return 1;
 }
 int var_defination_backend()
 {
-
+	if (sym == SEMICOLONSYM)
+	{
+		return 1;
+	}
+	else if(sym!=COMMASYM)//如果是分号（空）或者逗号
+	{
+		error(ERROR_VARIABLEDELARTION);
+		return 0;
+	}
+	while (sym == COMMASYM)
+	{
+		sym = getsym();
+		if (sym != IDSYM)
+		{
+			error(ERROR_VARIABLEDELARTION);
+			return 0;
+		}
+		if (sym == LMPARENSYM)//数组
+		{
+			sym = getsym();
+			if (sym != NUMSYM)
+			{
+				error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
+				return 0;
+			}
+			sym = getsym();
+			if (sym != RMPARENSYM)
+			{
+				error(PARENT_DISMATCH);
+				return 0;
+			}
+		}
+		sym = getsym();
+	}
+	return 1;
 }
 int var_declaration()
 {
@@ -173,38 +232,22 @@ int head()
 		return 0;
 	}
 }
-int parameter_table()
+int value_parameter_table()
 {
-	if (sym == INTSYM || sym == CHARSYM)
+	if (sym == RPARENSYM)
 	{
-		sym = getsym();
-		if (sym == IDSYM)
+		return 1;
+	}
+	else
+	{
+		while (expression())
 		{
-			sym = getsym();
-			while (sym == COMMASYM)//处理逗号
+			if (sym == COMMASYM)
 			{
 				sym = getsym();
-				if (sym == INTSYM || sym == CHARSYM)
-				{
-					sym = getsym();
-					if (sym == IDSYM)
-					{
-						sym = getsym();
-						continue;
-					}
-					else
-					{
-						error(ERROR_PARAMETER);
-						return 0;
-					}
-				}
-				else
-				{
-					error(ERROR_PARAMETER);
-					return 0;
-				}
+				continue;
 			}
-			if (sym == RPARENSYM)
+			else if (sym == RPARENSYM)
 			{
 				return 1;
 			}
@@ -214,11 +257,41 @@ int parameter_table()
 				return 0;
 			}
 		}
-		else
+	}
+}
+int parameter_table()
+{
+	if (sym == INTSYM || sym == CHARSYM)
+	{
+		sym = getsym();
+		if (sym != IDSYM)
 		{
 			error(ERROR_PARAMETER);
 			return 0;
 		}
+		sym = getsym();
+		while (sym == COMMASYM)//处理逗号
+		{
+			sym = getsym();
+			if (sym != INTSYM && sym != CHARSYM)
+			{
+				error(ERROR_PARAMETER);
+				return 0;
+			}
+			sym = getsym();
+			if (sym != IDSYM)
+			{
+				error(ERROR_PARAMETER);
+				return 0;
+			}
+			sym = getsym();
+		}
+		if (sym != RPARENSYM)
+		{
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+		return 1;
 	}
 	else if(sym == RPARENSYM)//为空
 	{
@@ -232,11 +305,45 @@ int parameter_table()
 }
 int void_func_defination()
 {
-
-}
-int void_func_defination()
-{
-
+	if (sym != IDSYM)
+	{
+		error(MISSING_IDENTIFIER);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LPARENSYM)
+	{
+		error(ERROR_PARAMETER);
+		return 0;
+	}
+	sym = getsym();
+	if (!parameter_table())
+	{
+		return 0;
+	}
+	if(sym!=RPARENSYM)
+	{
+		error(ERROR_PARAMETER);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LBPARENSYM)
+	{
+		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
+		return 0;
+	}
+	sym = getsym();
+	if (!compound_statement())
+	{
+		return 0;
+	}
+	if (sym != RBPARENSYM)
+	{
+		error(BRACE_DISMATCH);
+		return 0;
+	}
+	sym = getsym();
+	return 1;
 }
 int return_func_defination()
 {
@@ -367,9 +474,123 @@ int statement()
 		return 0;
 	}
 }
+int if_statement()
+{
+	if (sym != IFSYM)
+	{
+		error(ERROR_IN_IF);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LPARENSYM)
+	{
+		error(ERROR_IN_IF);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != IFSYM)
+	{
+		error(ERROR_IN_IF);
+		return 0;
+	}
+	if (sym != IFSYM)
+	{
+		error(ERROR_IN_IF);
+		return 0;
+	}
+}
+int condition_statement()
+{
+
+}
+int expression()//表达式
+{
+
+}
+int item()//项
+{
+	if (!factor())
+	{
+		return 0;
+	}
+	while (sym == TIMESSYM || sym == DIVSYM)
+	{
+		sym = getsym();
+		if (!factor())
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+int factor()//因子
+{
+	if (sym == IDSYM)//标识符，数组，有返回值函数调用
+	{
+		sym = getsym();
+		if (sym == LMPARENSYM)//数组
+		{
+			sym = getsym();
+			if (!expression())
+			{
+				return 0;
+			}
+			if (sym != RMPARENSYM)
+			{
+				error(PARENT_DISMATCH);
+				return 0;
+			}
+			sym = getsym();
+		}
+		else if (sym == LPARENSYM)//有返回值函数调用
+		{
+			sym = getsym();
+			if (!value_parameter_table)
+			{
+				return 0;
+			}
+			if (sym != RPARENSYM)
+			{
+				error(PARENT_DISMATCH);
+				return 0;
+			}
+			sym = getsym();
+		}
+		return 1;
+	}
+	else if (sym == PLUSSYM || sym == MINUSSYM || sym == NUMSYM || sym == ZEROSYM)
+	{
+		if (!integer())
+		{
+			return 0;
+		}
+		return 1;
+	}
+	else if (sym == CHSYM)
+	{
+		sym = getsym();
+		return 1;
+	}
+	else if (sym == LPARENSYM)
+	{
+		sym = getsym();
+		if (!expression())
+		{
+			return 0;
+		}
+		if (sym != RPARENSYM)
+		{
+			error(PARENT_DISMATCH);
+			return 0;
+		}
+		sym = getsym();
+		return 1;
+	}
+}
 int program()
 {
 	int main_cnt = 0;
+	int var_flag = 0;//在主程序中的函数定义后不应该有变量说明
 	sym = getsym();
 	if (sym == CONSTSYM)//常量说明
 	{
@@ -377,6 +598,11 @@ int program()
 	}
 	while (sym == INTSYM || sym == CHARSYM || sym == VOIDSYM)//TODO:需要循环
 	{
+		if (main_cnt != 0)
+		{
+			error(TOO_MANY_CODE_AFTER_MAIN_FUNCTION);
+			return 0;
+		}
 		if (sym == VOIDSYM)
 		{
 			sym = getsym();
@@ -384,15 +610,19 @@ int program()
 			{
 				sym = getsym();
 				main_func();//从(开始进入
-				main_cnt++;
+				main_cnt++;//不退出继续
+				continue;
 			}
 			else if (sym == IDSYM)
 			{
-				void_func_defination();
+				void_func_defination();//从标识符开始进入
+				var_flag = 1;
+				continue;
 			}
 			else
 			{
 				error(WRONG_HEAD);
+				return 0;
 			}
 		}
 		else//int char
@@ -400,6 +630,11 @@ int program()
 			head();
 			if (sym == LMPARENSYM)//数组
 			{
+				if (var_flag == 1)
+				{
+					error(VAR_DECLARATION_AFTER_FUNC);
+					return 0;
+				}
 				sym = getsym();
 				if (sym != NUMSYM)
 				{
@@ -432,6 +667,11 @@ int program()
 			}
 			else if (sym == COMMASYM)//变量定义后部
 			{
+				if (var_flag == 1)
+				{
+					error(VAR_DECLARATION_AFTER_FUNC);
+					return 0;
+				}
 				var_defination_backend();//说明一行有多个定义
 				if (sym == SEMICOLONSYM)
 				{
@@ -442,6 +682,11 @@ int program()
 			}
 			else if (sym == SEMICOLONSYM)
 			{
+				if (var_flag == 1)
+				{
+					error(VAR_DECLARATION_AFTER_FUNC);
+					return 0;
+				}
 				//TODO：这里打印
 				sym = getsym();
 				continue;
@@ -449,6 +694,7 @@ int program()
 			else if (sym == LPARENSYM)//说明是有返回值函数定义
 			{
 				return_func_defination_backend();
+				var_flag = 1;
 			}
 			else
 			{
@@ -458,14 +704,6 @@ int program()
 		}
 		if (main_cnt == 0)
 			error(MISSING_MAIN_FUNC);
-	}
-	if (sym == VOIDSYM)
-	{
-
-	}
-	else
-	{
-		error(WRONG_HEAD);
 	}
 }
 
