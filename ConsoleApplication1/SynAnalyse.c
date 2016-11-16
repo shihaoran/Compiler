@@ -434,27 +434,132 @@ int statement()
 {
 	if (sym == IFSYM)
 	{
-
+		if (!if_statement())
+		{
+			return 0;
+		}
+		return 1;
 	}
 	else if (sym == WHILESYM)
 	{
-
+		if (!while_statement())
+		{
+			return 0;
+		}
+		return 1;
 	}
-	else if (sym == LBPARENSYM)
+	else if (sym == LBPARENSYM)//TODO：检查一下
 	{
-
+		sym = getsym();
+		while (statement()) {}//因为可能为空，不应报错
+		if (sym != RBPARENSYM)
+		{
+			error(BRACE_DISMATCH);
+			return 0;
+		}
+		sym = getsym();
+		return 1;
 	}
 	else if (sym == IDSYM)
 	{
+		sym = getsym();
 		//TODO:有无返回值完全相同 这里不写函数
+		//函数调用语句
+		if (sym == LPARENSYM)
+		{
+			if (!parameter_table())
+			{
+				return 0;
+			}
+			if (sym != RPARENSYM)
+			{
+				error(PARENT_DISMATCH);
+				return 0;
+			}
+			sym = getsym();
+			if (sym != SEMICOLONSYM)
+			{
+				error(MISSING_SEMICOLON);
+				return 0;
+			}
+		}
+		else if (sym == ASSIGNSYM)//赋值语句1
+		{
+			sym = getsym();
+			if (!expression())
+			{
+				return 0;
+			}
+			if (sym != SEMICOLONSYM)
+			{
+				error(MISSING_SEMICOLON);
+				return 0;
+			}
+		}
+		else if (sym == LMPARENSYM)//赋值语句数组
+		{
+			sym = getsym();
+			if (!expression())
+			{
+				return 0;
+			}
+			if (sym != RMPARENSYM)
+			{
+				error(PARENT_DISMATCH);
+				return 0;
+			}
+			sym = getsym();
+			if (sym != ASSIGNSYM)
+			{
+				error(WRONG_ASSIGN_SYNTAX);
+				return 0;
+			}
+			sym = getsym();
+			if (!expression())
+			{
+				return 0;
+			}
+			if (sym != SEMICOLONSYM)
+			{
+				error(MISSING_SEMICOLON);
+				return 0;
+			}
+		}
+		else
+		{
+			error(ERROR_IN_STATEMENT);
+			return 0;
+		}
+		sym = getsym();
+		return 1;
 	}
 	else if (sym == SCANFSYM)
 	{
-
+		if (!scanf_statement())
+		{
+			return 0;
+		}
+		if (sym != SEMICOLONSYM)
+		{
+			error(MISSING_SEMICOLON);
+			return 0;
+		}
+		sym = getsym();
+		return 1;
 	}
 	else if (sym == PRINTFSYM)
 	{
-
+		if (!printf_statement())
+		{
+			return 0;
+		}
+		if (sym != SEMICOLONSYM)
+		{
+			error(MISSING_SEMICOLON);
+			return 0;
+		}
+		sym = getsym();
+		return 1;
 	}
 	else if (sym == SWITCHSYM)
 	{
@@ -488,24 +593,138 @@ int if_statement()
 		return 0;
 	}
 	sym = getsym();
-	if (sym != IFSYM)
+	if (!condition_statement())
+	{
+		return 0;
+	}
+	if (sym != RPARENSYM)
 	{
 		error(ERROR_IN_IF);
 		return 0;
 	}
-	if (sym != IFSYM)
+	sym = getsym();
+	if (!statement())
 	{
-		error(ERROR_IN_IF);
 		return 0;
 	}
+	if (sym == ELSESYM)
+	{
+		if (!statement())
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+int while_statement()
+{
+	if (sym != WHILESYM)
+	{
+		error(ERROR_IN_WHILE);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LPARENSYM)
+	{
+		error(ERROR_IN_WHILE);
+		return 0;
+	}
+	sym = getsym();
+	if (!condition_statement())
+	{
+		return 0;
+	}
+	if (sym != RPARENSYM)
+	{
+		error(ERROR_IN_WHILE);
+		return 0;
+	}
+	sym = getsym();
+	if (!statement())
+	{
+		return 0;
+	}
+	return 1;
 }
 int condition_statement()
+{
+	if (!expression())
+	{
+		return 0;
+	}
+	if (sym == BIGTHSYM||sym == SMALLTHSYM||
+		sym == NOTBTHSYM||sym == NOTSTHSYM||
+		sym == EQLSYM||sym == NOTESYM)
+	{
+		sym = getsym();
+		if (!expression())
+		{
+			error(WRONG_EXPRESSION);
+		}
+	}
+	return 1;
+}
+int scanf_statement()
+{
+	if (sym != SCANFSYM)
+	{
+		error(ERROR_IN_SCANF);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LPARENSYM)
+	{
+		error(ERROR_IN_SCANF);
+		return 0;
+	}
+	sym = getsym();
+	if(sym!=IDSYM)
+	{
+		error(ERROR_IN_SCANF);
+		return 0;
+	}
+	sym = getsym();
+	while (sym == COMMASYM)
+	{
+		sym = getsym();
+		if (sym != IDSYM)
+		{
+			error(ERROR_IN_SCANF);
+			return 0;
+		}
+		sym = getsym();
+	}
+	if(sym!=RPARENSYM)
+	{
+		error(ERROR_IN_SCANF);
+		return 0;
+	}
+	sym = getsym();
+	return 1;
+}
+int printf_statement()
 {
 
 }
 int expression()//表达式
 {
-
+	if (sym == PLUSSYM || sym == MINUSSYM)
+	{
+		sym = getsym();
+	}
+	if (!item())
+	{
+		return 0;
+	}
+	while (sym == PLUSSYM || sym == MINUSSYM)
+	{
+		sym = getsym();
+		if (!item())
+		{
+			return 0;
+		}
+	}
+	return 1;
 }
 int item()//项
 {
