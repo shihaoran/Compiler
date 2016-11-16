@@ -35,6 +35,9 @@
     <ClInclude Include="error.h">
       <Filter>源文件</Filter>
     </ClInclude>
+    <ClInclude Include="SynAnalyse.h">
+      <Filter>源文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\改编文法.md">

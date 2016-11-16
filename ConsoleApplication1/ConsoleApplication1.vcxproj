@@ -151,6 +151,7 @@
     <ClInclude Include="error.h" />
     <ClInclude Include="LexAnalyse.h" />
     <ClInclude Include="symnum.h" />
+    <ClInclude Include="SynAnalyse.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\改编文法.md" />

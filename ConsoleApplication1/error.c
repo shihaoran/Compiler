@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include"error.h"
-extern int linenum;
+#include"LexAnalyse.h"
+extern int line;
 int errnum = 0;
 int error(int errortype)
 {
@@ -12,16 +13,16 @@ int error(int errortype)
 		printf( "unknown symbol in line"); break;
 	case STRING_TOO_LONG:
 		printf( "string is too long"); break;
-	case WRONG_FORMAT_REAL_NUMBER:
-		printf( "wrong format real number"); break;
+	case MISSING_IDENTIFIER:
+		printf( "missing indentifier"); break;
 	case WRONG_FORMAT_INTEGER:
 		printf( "wrong format integer"); break;
 	case UNFINISHED_STRING:
 		printf( "\'\"\'dismatch"); break;
 	case UNFINISHED_PROGRAM:
 		printf( "the program is not finished"); break;
-	case MISSING_SEMICN:
-		printf( "sentence misses semicn"); break;
+	case MISSING_STRUCTURER_IN_FUNC_DEFINE:
+		printf( "missing structurer in function define"); break;
 	case DECLARATION_IS_NOT_START_WITH_TYPE:
 		printf( "declartion is not start with type"); break;
 	case DECLARATION_HAVE_NO_EQL:
@@ -56,15 +57,43 @@ int error(int errortype)
 		printf( "for sentence error"); break;
 	case ERROR_PROGRAM_STRUCTURE:
 		printf( "error program structure"); break;
-	case ERROR_IN_WRITE_SENTENCE:
-		printf( "error in write sentence"); break;
-	case ERROR_IN_READ_SENTENCE:
-		printf( "error int read sentence"); break;
+	case MISSING_MAIN_FUNC:
+		printf( "missing main function"); break;
+	case WRONG_HEAD:
+		printf( "wrong head"); break;
 	case MISSING_WHILE:
 		printf( "miss while condition"); break;
 	case MISSING_SENTENCE:
 		printf( "miss sentence"); break;
+	case VAR_DECLARATION_AFTER_FUNC:
+		printf("var declaration after function"); break;
+	case WRONG_STATEMENT:
+		printf("wrong statement"); break;
+	case MISSING_SEMICOLON:
+		printf("miss semicolon"); break;
+	case ERROR_PARAMETER:
+		printf("error parameter"); break;
+	case BRACE_DISMATCH:
+		printf("brace dismatch"); break;
+	case ERROR_IN_IF:
+		printf("error in if"); break;
+	case ERROR_IN_WHILE:
+		printf("error in while"); break;
+	case ERROR_IN_STATEMENT:
+		printf("error in statement"); break;
+	case ERROR_IN_SCANF:
+		printf("error in scanf"); break;
+	case ERROR_IN_PRINTF:
+		printf("error in printf"); break;
+	case ERROR_IN_SWITCH:
+		printf("error in switch"); break;
+	case ERROR_IN_SWITCHTABLE:
+		printf("error in switch table"); break;
+	case ERROR_IN_DEFAULT:
+		printf("error in default"); break;
+	case ERROR_IN_RETURN:
+		printf("error in return"); break;
 	}
-	printf( " in line %d\n", linenum + 1);
+	printf( " in line %d\n", line + 1);
 	return errortype;
 };

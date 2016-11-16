@@ -1,4 +1,5 @@
 #include "LexAnalyse.h"
+#include "SynAnalyse.h"
 #include "symnum.h"
 #include "error.h"
 int sym;
@@ -153,6 +154,7 @@ int var_defination_backend()
 			error(ERROR_VARIABLEDELARTION);
 			return 0;
 		}
+		sym = getsym();
 		if (sym == LMPARENSYM)//数组
 		{
 			sym = getsym();
@@ -197,7 +199,7 @@ int integer()
 			return 0;
 		}
 		sym = getsym();
-
+		return 1;
 	}
 	else if (sym == ZEROSYM)
 	{
@@ -240,23 +242,21 @@ int value_parameter_table()
 	}
 	else
 	{
-		while (expression())
+		if (!expression())
 		{
-			if (sym == COMMASYM)
-			{
-				sym = getsym();
-				continue;
-			}
-			else if (sym == RPARENSYM)
-			{
-				return 1;
-			}
-			else
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+		while (sym==COMMASYM)
+		{
+			sym = getsym();
+			if (!expression())
 			{
 				error(ERROR_PARAMETER);
 				return 0;
 			}
 		}
+		return 1;
 	}
 }
 int parameter_table()
@@ -571,11 +571,22 @@ int statement()
 	}
 	else if (sym == RETURNSYM)
 	{
-
+		if (!switch_statement())
+		{
+			return 0;
+		}
+		if (sym != SEMICOLONSYM)
+		{
+			error(MISSING_SEMICOLON);
+			return 0;
+		}
+		sym = getsym();
+		return 1;
 	}
 	else if (sym == SEMICOLONSYM)
 	{
-
+		sym = getsym();
+		return 1;
 	}
 	else
 	{
@@ -726,7 +737,7 @@ int printf_statement()
 		if (sym == COMMASYM)//字符串 表达式
 		{
 			sym = getsym();
-			if (!expression)
+			if (!expression())
 			{
 				error(ERROR_IN_PRINTF);//想想是不是要保留
 				return 0;
@@ -741,7 +752,7 @@ int printf_statement()
 	}
 	else//仅表达式
 	{
-		if (!expression)
+		if (!expression())
 		{
 			error(ERROR_IN_PRINTF);//想想是不是要保留
 			return 0;
@@ -877,6 +888,30 @@ int default_statement()
 	}
 	return 1;
 }
+int return_statement()
+{
+	if (sym != RETURNSYM)
+	{
+		error(ERROR_IN_RETURN);
+		return 0;
+	}
+	sym = getsym();
+	if (sym == LPARENSYM)
+	{
+		sym = getsym();
+		if (!expression())
+		{
+			return 0;
+		}
+		if (sym != RPARENSYM)
+		{
+			error(PARENT_DISMATCH);
+			return 0;
+		}
+	}//TODO:统一结束处理
+	sym = getsym();
+	return 1;
+}
 int expression()//表达式
 {
 	if (sym == PLUSSYM || sym == MINUSSYM)
@@ -935,7 +970,7 @@ int factor()//因子
 		else if (sym == LPARENSYM)//有返回值函数调用
 		{
 			sym = getsym();
-			if (!value_parameter_table)
+			if (!value_parameter_table())
 			{
 				return 0;
 			}
@@ -975,6 +1010,11 @@ int factor()//因子
 		}
 		sym = getsym();
 		return 1;
+	}
+	else
+	{
+		error(ERROR_IN_EXPRESSION);
+		return 0;
 	}
 }
 int program()
@@ -1092,9 +1132,15 @@ int program()
 				return 0;
 			}
 		}
-		if (main_cnt == 0)
-			error(MISSING_MAIN_FUNC);
 	}
+	if (main_cnt == 0)
+		error(MISSING_MAIN_FUNC);
+	if (sym != EOF)
+	{
+		error(UNFINISHED_PROGRAM);
+		return 0;
+	}
+	return 1;
 }
 
 
@@ -1104,14 +1150,7 @@ int program()
 int main()
 {
 	int result,i=0;
-	printf("jell%d  ",line);
 	init();
-	result = getsym();
-	while (result != EOF)
-	{
-		printresult(result, i);
-		i++;
-		result = getsym();
-	}
-	scanf("%s", &result);
+	//program();
+	scanf("%d", &result);
 }

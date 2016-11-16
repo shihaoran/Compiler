@@ -116,7 +116,7 @@ int getsym()
 	case MINUSSYM:return MINUSSYM;
 	case TIMESSYM:return TIMESSYM;
 	case DIVSYM:return DIVSYM;
-	case LPARENSYM:return LBPARENSYM;
+	case LPARENSYM:return LPARENSYM;
 	case RPARENSYM:return RPARENSYM;
 	case LBPARENSYM:return LBPARENSYM;
 	case RBPARENSYM:return RBPARENSYM;
@@ -248,7 +248,7 @@ int getsym()
 		return ZEROSYM;
 	case DIGITC:
 		readch();
-		while (isWhich(ch) == DIGITC)
+		while (isWhich(ch) == DIGITC|| isWhich(ch) == DIGITC0)
 		{
 			catToken(ch);
 			readch();
@@ -280,7 +280,6 @@ int reserveword()
 }
 void printresult(int result,int i)
 {
-	char str[10];
 	switch (result)
 	{
 	case CONSTSYM:printf("%d  CONST  %s\n", i, token);return;
@@ -334,14 +333,14 @@ int init()
 	int result = 0;
 	int i = 1;
 	printf("Path:");
-	scanf("%s", &path);
+	scanf("%s", path);
 	src = fopen(path, "r");
-	/*result = getsym();
+	result = getsym();
 	while (result != EOF)
 	{
 		printresult(result,i);
 		i++;
 		result=getsym();
 	}
-	scanf("%s", &path);*/
+	return 1;
 }
