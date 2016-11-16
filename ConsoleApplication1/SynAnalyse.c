@@ -99,9 +99,23 @@ int var_defination()
 {
 
 }
-int var_declaration()
+int var_defination_backend()
 {
 
+}
+int var_declaration()
+{
+	while (sym == INTSYM||sym==CHARSYM)
+	{
+		var_defination();
+		if (sym != SEMICOLONSYM)
+		{
+			error(MISSING_SEMICOLON);//TODO:退出
+			return 0;
+		}
+		else sym = getsym();
+	}
+	return 1;
 }
 int integer()
 {
@@ -127,7 +141,41 @@ int integer()
 		return 0;
 	}
 }
+int head()
+{
+	if (sym == INTSYM || sym == CHARSYM)
+	{
+		sym = getsym();
+		if (sym == IDSYM)
+		{
+			sym = getsym();
+			return 1;
+		}
+		else
+		{
+			error(WRONG_HEAD);
+			return 0;
+		}
+	}
+	else
+	{
+		error(WRONG_HEAD);
+		return 0;
+	}
+}
 int void_func_defination()
+{
+
+}
+int void_func_defination()
+{
+
+}
+int return_func_defination()
+{
+
+}
+int return_func_defination_backend()
 {
 
 }
@@ -217,7 +265,7 @@ int program()
 	{
 		const_declaration();
 	}
-	if (sym == INTSYM || sym == CHARSYM || sym == VOIDSYM)//TODO:需要循环
+	while (sym == INTSYM || sym == CHARSYM || sym == VOIDSYM)//TODO:需要循环
 	{
 		if (sym == VOIDSYM)
 		{
@@ -236,13 +284,73 @@ int program()
 				error(WRONG_HEAD);
 			}
 		}
-		else
+		else//int char
 		{
-			error(MISSING_IDENTIFIER);
+			head();
+			if (sym == LMPARENSYM)//数组
+			{
+				sym = getsym();
+				if (sym == NUMSYM)
+				{
+					sym = getsym();
+					if (sym == RMPARENSYM)
+					{
+						sym = getsym();
+						if (sym == SEMICOLONSYM)
+						{
+							//TODO：这里打印
+							sym = getsym();
+							continue;
+						}
+						else if (sym == COMMASYM)
+						{
+							var_defination_backend();//说明一行有多个定义
+							if (sym == SEMICOLONSYM)
+							{
+								//TODO：这里打印
+								sym = getsym();
+								continue;
+							}
+						}
+					}
+					else
+					{
+						error(PARENT_DISMATCH);
+						return 0;
+					}
+				}
+				else
+				{
+					error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
+					return 0;
+				}
+			}
+			else if (sym == COMMASYM)//变量定义后部
+			{
+				var_defination_backend();//说明一行有多个定义
+				if (sym == SEMICOLONSYM)
+				{
+					//TODO：这里打印
+					sym = getsym();
+					continue;
+				}
+			}
+			else if (sym == SEMICOLONSYM)
+			{
+				//TODO：这里打印
+				sym = getsym();
+				continue;
+			}
+			else if (sym == LPARENSYM)//说明是有返回值函数定义
+			{
+				return_func_defination_backend();
+			}
+			else
+			{
+				error(MISSING_SEMICOLON);
+				return 0;
+			}
 		}
-		var_declaration(&sym);;
-		while (sym == SEMICOLONSYM)
-			sym = getsym();
 	}
 	if (sym == VOIDSYM)
 	{
