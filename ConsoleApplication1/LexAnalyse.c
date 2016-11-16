@@ -176,7 +176,8 @@ int getsym()
 	case SQUOTESYM:
 		readch();
 		if (isWhich(ch) == PLUSSYM || isWhich(ch) == MINUSSYM ||
-			isWhich(ch) == DIGITC || isWhich(ch) == LETTERC)
+			isWhich(ch) == TIMESSYM || isWhich(ch) == DIVSYM ||
+			isWhich(ch) == DIGITC || isWhich(ch) == LETTERC || isWhich(ch) == DIGITC0)
 		{
 			catToken(ch);
 			readch();

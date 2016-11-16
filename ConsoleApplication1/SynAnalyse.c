@@ -487,7 +487,7 @@ int statement()
 		if (sym == LPARENSYM)
 		{
 			sym = getsym();
-			if (!parameter_table())
+			if (!value_parameter_table())
 			{
 				return 0;
 			}
@@ -938,8 +938,8 @@ int return_statement()
 			error(PARENT_DISMATCH);
 			return 0;
 		}
+		sym = getsym();
 	}//TODO:统一结束处理
-	sym = getsym();
 	return 1;
 }
 int expression()//表达式
@@ -1110,7 +1110,6 @@ int program()
 				sym = getsym();
 				if (sym == SEMICOLONSYM)
 				{
-					//TODO：这里打印
 					sym = getsym();
 					continue;
 				}
@@ -1147,7 +1146,7 @@ int program()
 					error(VAR_DECLARATION_AFTER_FUNC);
 					return 0;
 				}
-				//TODO：这里打印
+				printf("Line:%d --This is a var_defination_statement!\n", line + 1);
 				sym = getsym();
 				continue;
 			}
