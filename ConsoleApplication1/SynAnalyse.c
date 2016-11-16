@@ -169,8 +169,8 @@ int var_defination_backend()
 				error(PARENT_DISMATCH);
 				return 0;
 			}
+			sym = getsym();
 		}
-		sym = getsym();
 	}
 	return 1;
 }
@@ -193,11 +193,9 @@ int integer()
 	if (sym == PLUSSYM || sym == MINUSSYM)
 	{
 		sym = getsym();
-		if (sym != NUMSYM)
-		{
-			error(WRONG_FORMAT_INTEGER);
-			return 0;
-		}
+	}
+	if (sym == NUMSYM)
+	{
 		sym = getsym();
 		return 1;
 	}
@@ -422,7 +420,13 @@ int compound_statement()//复合语句
 	{
 		var_declaration();
 	}
-	while (statement()) {}
+	while (statement()) 
+	{
+		if (sym == RBPARENSYM)
+		{
+			break;
+		}
+	}
 	if (sym != RBPARENSYM)
 	{
 		error(WRONG_STATEMENT);
@@ -451,7 +455,11 @@ int statement()
 	else if (sym == LBPARENSYM)//TODO：检查一下
 	{
 		sym = getsym();
-		while (statement()) {}//因为可能为空，不应报错
+		while (statement()) 
+		{
+			if (sym == RBPARENSYM)
+				break;
+		}//因为可能为空，不应报错
 		if (sym != RBPARENSYM)
 		{
 			error(BRACE_DISMATCH);
@@ -467,6 +475,7 @@ int statement()
 		//函数调用语句
 		if (sym == LPARENSYM)
 		{
+			sym = getsym();
 			if (!parameter_table())
 			{
 				return 0;
@@ -571,7 +580,7 @@ int statement()
 	}
 	else if (sym == RETURNSYM)
 	{
-		if (!switch_statement())
+		if (!return_statement())
 		{
 			return 0;
 		}
@@ -624,6 +633,7 @@ int if_statement()
 	}
 	if (sym == ELSESYM)
 	{
+		sym = getsym();
 		if (!statement())
 		{
 			return 0;
@@ -882,6 +892,7 @@ int default_statement()
 		error(ERROR_IN_DEFAULT);
 		return 0;
 	}
+	sym = getsym();
 	if (!statement())
 	{
 		return 0;
@@ -1151,6 +1162,6 @@ int main()
 {
 	int result,i=0;
 	init();
-	//program();
+	program();
 	scanf("%d", &result);
 }

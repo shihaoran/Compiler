@@ -217,13 +217,13 @@ int getsym()
 		}
 	case NEWLC:
 		line++;
+		printf("%d\n", line);
 		return_int = getsym();
 		return return_int;
 	case SPACEC:
 		return_int = getsym();
 		return return_int;
 	case TABC:
-		line++;
 		return_int = getsym();
 		return return_int;
 	case LETTERC:
@@ -333,14 +333,15 @@ int init()
 	int result = 0;
 	int i = 1;
 	printf("Path:");
-	scanf("%s", path);
-	src = fopen(path, "r");
-	result = getsym();
+	//scanf("%s", path);
+	//src = fopen(path, "r");
+	src = fopen("C:\\test.c", "r");
+	/*result = getsym();
 	while (result != EOF)
 	{
 		printresult(result,i);
 		i++;
 		result=getsym();
-	}
+	}*/
 	return 1;
 }
