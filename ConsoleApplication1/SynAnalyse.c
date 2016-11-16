@@ -10,11 +10,13 @@ int const_defination()//常量定义
 		if (sym != IDSYM)
 		{
 			error(DECLARATION_SHOULD_HAVE_A_ID);
+			return 0;
 		}
 		sym = getsym();
 		if (sym != ASSIGNSYM)
 		{
 			error(DECLARATION_HAVE_NO_EQL);
+			return 0;
 		}
 		sym = getsym();
 		integer();
@@ -24,11 +26,13 @@ int const_defination()//常量定义
 			if (sym != IDSYM)
 			{
 				error(DECLARATION_SHOULD_HAVE_A_ID);
+				return 0;
 			}
 			sym = getsym();
 			if (sym != ASSIGNSYM)
 			{
 				error(DECLARATION_HAVE_NO_EQL);
+				return 0;
 			}
 			sym = getsym();
 			integer();
@@ -41,16 +45,19 @@ int const_defination()//常量定义
 		if (sym != IDSYM)
 		{
 			error(DECLARATION_SHOULD_HAVE_A_ID);
+			return 0;
 		}
 		sym = getsym();
 		if (sym != ASSIGNSYM)
 		{
 			error(DECLARATION_HAVE_NO_EQL);
+			return 0;
 		}
 		sym = getsym();
 		if (sym != CHSYM)
 		{
 			error(WRONG_ASSIGN_SYNTAX);
+			return 0;
 		}
 		sym = getsym();
 		while (sym == COMMASYM)
@@ -59,16 +66,19 @@ int const_defination()//常量定义
 			if (sym != IDSYM)
 			{
 				error(DECLARATION_SHOULD_HAVE_A_ID);
+				return 0;
 			}
 			sym = getsym();
 			if (sym != ASSIGNSYM)
 			{
 				error(DECLARATION_HAVE_NO_EQL);
+				return 0;
 			}
 			sym = getsym();
 			if (sym != CHSYM)
 			{
 				error(WRONG_ASSIGN_SYNTAX);
+				return 0;
 			}
 			sym = getsym();
 		}
@@ -163,6 +173,63 @@ int head()
 		return 0;
 	}
 }
+int parameter_table()
+{
+	if (sym == INTSYM || sym == CHARSYM)
+	{
+		sym = getsym();
+		if (sym == IDSYM)
+		{
+			sym = getsym();
+			while (sym == COMMASYM)//处理逗号
+			{
+				sym = getsym();
+				if (sym == INTSYM || sym == CHARSYM)
+				{
+					sym = getsym();
+					if (sym == IDSYM)
+					{
+						sym = getsym();
+						continue;
+					}
+					else
+					{
+						error(ERROR_PARAMETER);
+						return 0;
+					}
+				}
+				else
+				{
+					error(ERROR_PARAMETER);
+					return 0;
+				}
+			}
+			if (sym == RPARENSYM)
+			{
+				return 1;
+			}
+			else
+			{
+				error(ERROR_PARAMETER);
+				return 0;
+			}
+		}
+		else
+		{
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+	}
+	else if(sym == RPARENSYM)//为空
+	{
+		return 1;
+	}
+	else
+	{
+		error(ERROR_PARAMETER);
+		return 0;
+	}
+}
 int void_func_defination()
 {
 
@@ -173,26 +240,68 @@ int void_func_defination()
 }
 int return_func_defination()
 {
-
+	if (!head())
+		return 0;
+	if (!return_func_defination_backend())
+		return 0;
+	return 1;
 }
 int return_func_defination_backend()
 {
-
-}
-int main_func()//主函数
-{
 	if (sym != LPARENSYM)
-		error(WRONG_HEAD);
+	{
+		error(ERROR_PARAMETER);
+		return 0;
+	}
 	sym = getsym();
+	parameter_table();
 	if (sym != RPARENSYM)
-		error(WRONG_HEAD);
+	{
+		error(ERROR_PARAMETER);
+		return 0;
+	}
 	sym = getsym();
 	if (sym != LBPARENSYM)
-		error(PARENT_DISMATCH);
+	{
+		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
+		return 0;
+	}
+	sym = getsym();
+	compound_statement();
+	if(sym!=RBPARENSYM)
+	{
+		error(BRACE_DISMATCH);
+		return 0;
+	}
+	sym = getsym();
+	return 1;
+}
+int main_func()//主函数,void main前面判断过了
+{
+	if (sym != LPARENSYM)
+	{
+		error(WRONG_HEAD);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != RPARENSYM)
+	{
+		error(WRONG_HEAD);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LBPARENSYM)
+	{
+		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
+		return 0;
+	}	
 	sym = getsym();
 	compound_statement();
 	if (sym != RBPARENSYM)
-		error(PARENT_DISMATCH);
+	{
+		error(BRACE_DISMATCH);
+		return 0;
+	}
 	sym = getsym();
 	return 1;
 }
@@ -260,6 +369,7 @@ int statement()
 }
 int program()
 {
+	int main_cnt = 0;
 	sym = getsym();
 	if (sym == CONSTSYM)//常量说明
 	{
@@ -274,6 +384,7 @@ int program()
 			{
 				sym = getsym();
 				main_func();//从(开始进入
+				main_cnt++;
 			}
 			else if (sym == IDSYM)
 			{
@@ -290,39 +401,33 @@ int program()
 			if (sym == LMPARENSYM)//数组
 			{
 				sym = getsym();
-				if (sym == NUMSYM)
-				{
-					sym = getsym();
-					if (sym == RMPARENSYM)
-					{
-						sym = getsym();
-						if (sym == SEMICOLONSYM)
-						{
-							//TODO：这里打印
-							sym = getsym();
-							continue;
-						}
-						else if (sym == COMMASYM)
-						{
-							var_defination_backend();//说明一行有多个定义
-							if (sym == SEMICOLONSYM)
-							{
-								//TODO：这里打印
-								sym = getsym();
-								continue;
-							}
-						}
-					}
-					else
-					{
-						error(PARENT_DISMATCH);
-						return 0;
-					}
-				}
-				else
+				if (sym != NUMSYM)
 				{
 					error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
 					return 0;
+				}
+				sym = getsym();
+				if (sym != RMPARENSYM)
+				{
+					error(PARENT_DISMATCH);
+					return 0;
+				}
+				sym = getsym();
+				if (sym == SEMICOLONSYM)
+				{
+					//TODO：这里打印
+					sym = getsym();
+					continue;
+				}
+				else if (sym == COMMASYM)
+				{
+					var_defination_backend();//说明一行有多个定义
+					if (sym == SEMICOLONSYM)
+					{
+						//TODO：这里打印
+						sym = getsym();
+						continue;
+					}
 				}
 			}
 			else if (sym == COMMASYM)//变量定义后部
@@ -351,6 +456,8 @@ int program()
 				return 0;
 			}
 		}
+		if (main_cnt == 0)
+			error(MISSING_MAIN_FUNC);
 	}
 	if (sym == VOIDSYM)
 	{
