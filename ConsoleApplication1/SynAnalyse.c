@@ -563,7 +563,11 @@ int statement()
 	}
 	else if (sym == SWITCHSYM)
 	{
-
+		if (!switch_statement())
+		{
+			return 0;
+		}
+		return 1;
 	}
 	else if (sym == RETURNSYM)
 	{
@@ -704,7 +708,174 @@ int scanf_statement()
 }
 int printf_statement()
 {
-
+	if (sym != PRINTFSYM)
+	{
+		error(ERROR_IN_PRINTF);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LPARENSYM)
+	{
+		error(ERROR_IN_PRINTF);
+		return 0;
+	}
+	sym = getsym();
+	if (sym == STRSYM)
+	{
+		sym = getsym();
+		if (sym == COMMASYM)//字符串 表达式
+		{
+			sym = getsym();
+			if (!expression)
+			{
+				error(ERROR_IN_PRINTF);//想想是不是要保留
+				return 0;
+			}
+		}
+		else if (sym == RPARENSYM) {}//仅字符串
+		else
+		{
+			error(ERROR_IN_PRINTF);
+			return 0;
+		}
+	}
+	else//仅表达式
+	{
+		if (!expression)
+		{
+			error(ERROR_IN_PRINTF);//想想是不是要保留
+			return 0;
+		}
+	}
+	if (sym != RPARENSYM)
+	{
+		error(ERROR_IN_PRINTF);
+		return 0;
+	}
+	sym = getsym();
+	return 1;
+}
+int switch_statement()
+{
+	if (sym != SWITCHSYM)
+	{
+		error(ERROR_IN_SWITCH);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LPARENSYM)
+	{
+		error(ERROR_IN_SWITCH);
+		return 0;
+	}
+	sym = getsym();
+	if (!expression())
+	{
+		return 0;
+	}
+	if (sym != RPARENSYM)
+	{
+		error(PARENT_DISMATCH);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != LBPARENSYM)
+	{
+		error(ERROR_IN_SWITCH);
+		return 0;
+	}
+	sym = getsym();
+	if (!switch_table())
+	{
+		return 0;
+	}
+	if (sym == DEFAULTSYM)//有缺省
+	{
+		if (!default_statement())
+		{
+			return 0;
+		}
+	}
+	if (sym != RBPARENSYM)
+	{
+		error(ERROR_IN_SWITCH);
+		return 0;
+	}
+	sym = getsym();
+	return 1;
+}
+int switch_table()
+{
+	if (sym != CASESYM)
+	{
+		error(ERROR_IN_SWITCHTABLE);
+		return 0;
+	}
+	sym = getsym();//下面判断一个常量
+	if (sym == CHSYM)
+	{
+		sym = getsym();
+	}
+	else if (integer()) {}
+	else
+	{
+		error(ERROR_IN_SWITCHTABLE);
+		return 0;
+	}
+	if (sym != COLONSYM)
+	{
+		error(ERROR_IN_SWITCHTABLE);
+		return 0;
+	}
+	sym = getsym();
+	if (!statement())
+	{
+		return 0;
+	}
+	while (sym == CASESYM)
+	{
+		sym = getsym();//下面判断一个常量
+		if (sym == CHSYM)
+		{
+			sym = getsym();
+		}
+		else if (integer()) {}
+		else
+		{
+			error(ERROR_IN_SWITCHTABLE);
+			return 0;
+		}
+		if (sym != COLONSYM)
+		{
+			error(ERROR_IN_SWITCHTABLE);
+			return 0;
+		}
+		sym = getsym();
+		if (!statement())
+		{
+			return 0;
+		}
+	}
+	return 1;
+}
+int default_statement()
+{
+	if (sym != DEFAULTSYM)
+	{
+		error(ERROR_IN_DEFAULT);
+		return 0;
+	}
+	sym = getsym();
+	if (sym != COLONSYM)
+	{
+		error(ERROR_IN_DEFAULT);
+		return 0;
+	}
+	if (!statement())
+	{
+		return 0;
+	}
+	return 1;
 }
 int expression()//表达式
 {
