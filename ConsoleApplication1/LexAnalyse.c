@@ -263,6 +263,7 @@ int getsym()
 }
 int reserveword()
 {
+	int i;
 	if (strcmp(token, "const") == 0)	return CONSTSYM;
 	if (strcmp(token, "int") == 0)		return INTSYM;
 	if (strcmp(token, "char") == 0)		return CHARSYM;
@@ -277,6 +278,14 @@ int reserveword()
 	if (strcmp(token, "scanf") == 0)	return SCANFSYM;
 	if (strcmp(token, "printf") == 0)	return PRINTFSYM;
 	if (strcmp(token, "return") == 0)	return RETURNSYM;
+	//以下将标识符全部转换为小写
+	for (i = 0; i < tokenptr; i++)
+	{
+		if (token[i] <= 'Z'&&token[i] >= 'A')
+		{
+			token[i] = token[i] + 'a' - 'A';
+		}
+	}
 	return IDSYM;
 }
 void printresult(int result,int i)
@@ -346,6 +355,6 @@ int init()
 		i++;
 		result=getsym();
 	}
-	*/
+	//*/
 	return 1;
 }
