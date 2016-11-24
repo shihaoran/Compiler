@@ -229,7 +229,7 @@ int getsym()
 		return return_int;
 	case LETTERC:
 		readch();
-		while (isWhich(ch) == LETTERC || isWhich(ch) == DIGITC)
+		while (isWhich(ch) == LETTERC || isWhich(ch) == DIGITC || isWhich(ch) == DIGITC0)
 		{
 			catToken(ch);
 			readch();
@@ -323,6 +323,7 @@ void printresult(int result,int i)
 	case SQUOTESYM :printf("%d  SINGLEQUOTE  %s\n", i, token);return;
 	case QUOTESYM :printf("%d  QUOTE  %s\n", i, token);return;
 	case ASSIGNSYM :printf("%d  ASSIGN  %s\n", i, token);return;
+	case ZEROSYM:printf("%d  ZERO  %s\n", i, token); return;
 	default:
 		break;
 	}
@@ -337,12 +338,14 @@ int init()
 	scanf("%s", path);
 	src = fopen(path, "r");
 	//src = fopen("C:\\test.c", "r");
-	/*result = getsym();
+	/*
+	result = getsym();
 	while (result != EOF)
 	{
 		printresult(result,i);
 		i++;
 		result=getsym();
-	}*/
+	}
+	*/
 	return 1;
 }

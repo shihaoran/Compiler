@@ -428,6 +428,10 @@ int compound_statement()//∏¥∫œ”Ôæ‰
 	{
 		var_declaration();
 	}
+	if (sym == RBPARENSYM)
+	{
+		return 1;
+	}
 	while (statement()) 
 	{
 		if (sym == RBPARENSYM)
