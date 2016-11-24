@@ -1,13 +1,13 @@
 #include "LexAnalyse.h"
-#include "symnum.h"
 
 
 
-char token[MAXTOKENLEN];
+char token[MAX_TOKEN_LEN];
 int tokenptr = 0;
 char ch;
 int num;
 int line = 0;
+int id[MAX_ID_LEN];
 int strflag = 0;
 FILE *src;
 
@@ -15,14 +15,14 @@ FILE *src;
 void clearToken()
 {
 	int i;
-	for (i = 0; i<MAXTOKENLEN; i++)
+	for (i = 0; i<MAX_TOKEN_LEN; i++)
 		token[i] = '\0';
 	tokenptr = 0;
 }
 
 int catToken(char c)//0 Îª¼Ù 1 ÎªÕæ
 {
-	if (tokenptr >= MAXTOKENLEN - 1)
+	if (tokenptr >= MAX_TOKEN_LEN - 1)
 		return 0;
 	else
 	{
@@ -286,6 +286,9 @@ int reserveword()
 			token[i] = token[i] + 'a' - 'A';
 		}
 	}
+	for (i = 0; i<MAX_ID_LEN; i++)
+		id[i] = '\0';
+	strcpy(id, token);
 	return IDSYM;
 }
 void printresult(int result,int i)

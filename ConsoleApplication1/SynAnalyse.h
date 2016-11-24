@@ -26,3 +26,113 @@ int expression();
 int item();
 int factor();
 int program();
+#define MAX_ID_LEN 128 //标识符最长值
+#define MAX_STR_LEN 512 //字符串最长值
+#define MAX_STR_TAB_LEN 512 //字符串数组最长值
+#define MAX_TAB_LEN 512 //符号表最长值
+#define MAX_OP_LEN 32 //操作数最长值
+#define MAX_QUAT_LEN 1024 //四元式组最长值
+
+/*=================语法分析部分=====================*/
+int sym;//全局符号
+extern int line;//当前行
+extern char id[MAX_ID_LEN];//最后读入的标识符
+			
+/*======================END=========================*/
+
+/*=================生成四元式部分===================*/
+
+
+/********定义符号表表项*******/
+struct sym_record
+{
+	char name[MAX_ID_LEN];
+	int type;
+	/*
+	0 init
+	1 const
+	2 var
+	3 func
+	4 array
+	5 para
+	6 tmp
+	*/
+	int value_type;
+	/*
+	0 init
+	1 int
+	2 char
+	3 str
+	*/
+	union
+	{
+		int int_value;
+		char char_value;
+		char str_value[MAX_STR_LEN];
+	};
+} sym_table[MAX_TAB_LEN];
+
+/********定义四元式枚举类型助记符*******/
+enum quat_op {
+	CONST,
+	VAR,
+	ADD, 
+	SUB, 
+	MUL, 
+	DIV, 
+	NEG,
+	MOV,
+	JMP,
+	JE,//jump when equal
+	JNE,//jump when not equal
+	JZ,//jump when last result was zero
+	JNZ,//jump when last result was not zero
+	JG,//jump when greater than
+	JGE,//jump when greater than or equal to
+	JL,//jump when less than
+	JLE,//jump when less than or equal to
+	RET,
+	WRITE,
+	READ,
+	PARA,
+	CALL, 
+	NOP,
+	FUNC,
+	EOFUNC,
+	MAINFUNC,
+	EOMAINFUNC
+};
+
+/********定义四元式枚举类型助记符字符串常量*******/
+/********方便输出*******/
+const char * quat_op_name[] = {
+	"CONST","VAR","ADD","SUB","MUL",
+	"DIV","NEG","MOV","JMP","JE","JNE",
+	"JZ","JNZ","JG","JGE","JL","JLE",
+	"RET","WRITE","READ","PARA","CALL","NOP",
+	"FUNC","EOFUNC","MAINFUNC","EOMAINFUNC"
+};
+
+/********定义四元式表表项*******/
+struct quat_record
+{
+	int label;//标签号
+	int op;
+	char op1[MAX_OP_LEN];
+	char op2[MAX_OP_LEN];
+	char opr[MAX_OP_LEN];
+} quat_table[MAX_QUAT_LEN];
+
+/********定义字符串常量数组*******/
+const str_table[MAX_STR_TAB_LEN][MAX_STR_LEN];
+
+/********定义各种指针*******/
+int sym_ptr = 0;//当前符号表尽头指针
+int para_ptr = 0;//函数调用参数起始位置
+int local_ptr = 0;//函数调用局部变量起始位置
+int quat_ptr = 0;//四元式指针
+int str_ptr = 0;//字符串常量指针
+int label_ptr = 0;//当前label指针
+int tmp_ptr = 0;//当前临时变量号指针
+			
+/*===================END=================*/

@@ -2,8 +2,7 @@
 #include "SynAnalyse.h"
 #include "symnum.h"
 #include "error.h"
-int sym;
-extern int line;
+
 int const_defination()//常量定义
 {
 	if (sym == INTSYM)

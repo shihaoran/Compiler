@@ -150,7 +150,6 @@
   <ItemGroup>
     <ClInclude Include="error.h" />
     <ClInclude Include="LexAnalyse.h" />
-    <ClInclude Include="symnum.h" />
     <ClInclude Include="SynAnalyse.h" />
   </ItemGroup>
   <ItemGroup>
