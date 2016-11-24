@@ -176,7 +176,8 @@ int getsym()
 	case SQUOTESYM:
 		readch();
 		if (isWhich(ch) == PLUSSYM || isWhich(ch) == MINUSSYM ||
-			isWhich(ch) == DIGITC || isWhich(ch) == LETTERC)
+			isWhich(ch) == TIMESSYM || isWhich(ch) == DIVSYM ||
+			isWhich(ch) == DIGITC || isWhich(ch) == LETTERC || isWhich(ch) == DIGITC0)
 		{
 			catToken(ch);
 			readch();
@@ -217,18 +218,18 @@ int getsym()
 		}
 	case NEWLC:
 		line++;
+		//printf("%d\n", line);
 		return_int = getsym();
 		return return_int;
 	case SPACEC:
 		return_int = getsym();
 		return return_int;
 	case TABC:
-		line++;
 		return_int = getsym();
 		return return_int;
 	case LETTERC:
 		readch();
-		while (isWhich(ch) == LETTERC || isWhich(ch) == DIGITC|| isWhich(ch) == DIGITC0)
+		while (isWhich(ch) == LETTERC || isWhich(ch) == DIGITC)
 		{
 			catToken(ch);
 			readch();
@@ -242,7 +243,6 @@ int getsym()
 			retract();
 			error(WRONG_FORMAT_INTEGER);
 			return ZEROSYM;
-			//TODO:其实不应该返回
 		}
 		retract();
 		gennum();
@@ -323,7 +323,6 @@ void printresult(int result,int i)
 	case SQUOTESYM :printf("%d  SINGLEQUOTE  %s\n", i, token);return;
 	case QUOTESYM :printf("%d  QUOTE  %s\n", i, token);return;
 	case ASSIGNSYM :printf("%d  ASSIGN  %s\n", i, token);return;
-	case ZEROSYM:printf("%d  ZERO  %s\n", i, token); return;
 	default:
 		break;
 	}
@@ -337,14 +336,13 @@ int init()
 	printf("Path:");
 	scanf("%s", path);
 	src = fopen(path, "r");
-	/*
-	result = getsym();
+	//src = fopen("C:\\test.c", "r");
+	/*result = getsym();
 	while (result != EOF)
 	{
 		printresult(result,i);
 		i++;
 		result=getsym();
-	}
-	*/
+	}*/
 	return 1;
 }
