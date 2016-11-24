@@ -169,8 +169,8 @@ int var_defination_backend()
 				error(PARENT_DISMATCH);
 				return 0;
 			}
+			sym = getsym();
 		}
-		sym = getsym();
 	}
 	return 1;
 }
@@ -193,24 +193,19 @@ int integer()
 	if (sym == PLUSSYM || sym == MINUSSYM)
 	{
 		sym = getsym();
-		if (sym != NUMSYM)
-		{
-			error(WRONG_FORMAT_INTEGER);
-			return 0;
-		}
-		sym = getsym();
-		return 1;
 	}
 	else if (sym == ZEROSYM)
 	{
 		sym = getsym();
 		return 1;
 	}
-	else
+	if (sym != NUMSYM)
 	{
 		error(WRONG_FORMAT_INTEGER);
 		return 0;
 	}
+	sym = getsym();
+	return 1;
 }
 int head()
 {
@@ -1151,6 +1146,6 @@ int main()
 {
 	int result,i=0;
 	init();
-	//program();
+	program();
 	scanf("%d", &result);
 }
