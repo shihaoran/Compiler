@@ -5,9 +5,16 @@
 #define MAX_TOKEN_LEN 128 // 缓冲区最长值
 #define MAX_ID_LEN 128 //标识符最长值
 
-extern char token[];
-extern int num;
-extern int line;
+char token[MAX_TOKEN_LEN];
+int tokenptr = 0;
+int num;//最后一个读入的数字
+char c;//最后一个读入的字符
+char ch;
+int line = 0;
+int id[MAX_ID_LEN];
+int strflag = 0;
+
+
 void clearToken();
 int catToken(char c);
 int retract();

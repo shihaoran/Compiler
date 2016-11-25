@@ -1,16 +1,73 @@
-#include "LexAnalyse.h"
 #include "SynAnalyse.h"
-#include "symnum.h"
-#include "error.h"
+
+/*=================四元式生成部分=====================*/
+int search_sym(char *name)//寻找当前标识符在符号表中的位置
+{
+	int i;
+	for (i = sym_ptr; i >= 0; i--)
+	{
+		if (!strcmp(name, sym_table[i].name))
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void emit(int op, char* op1, char* op2, char* opr)//生成四元式，加入四元式数组中,局部常量不加标识符用以区分全局局部
+{
+	quat_table[quat_ptr].op = op;
+	strcpy(quat_table[quat_ptr].op1, op1);
+	strcpy(quat_table[quat_ptr].op2, op2);
+	strcpy(quat_table[quat_ptr].opr, opr);
+	quat_ptr++;
+}
+
+void add_sym(char *name, int type, int value_type, int int_v, char char_v, char* str_v)
+{
+	strcpy(sym_table[sym_ptr].name, name);
+	sym_table[sym_ptr].type = type;
+	sym_table[sym_ptr].value_type = value_type;
+	if (type == TYPE_CONST)
+	{
+		switch (value_type)
+		{
+		case TYPE_VALUE_INT: 
+			sym_table[sym_ptr].int_value = int_v; 
+			break;
+		case TYPE_VALUE_CHAR: 
+			sym_table[sym_ptr].char_value = char_v;
+			break;
+		case TYPE_VALUE_STR: 
+			sym_table[sym_ptr].str_value, str_v;
+			break;
+		}
+	}
+	else if (type == TYPE_ARRAY)
+		sym_table[sym_ptr].int_value = int_v;
+	else
+		sym_table[sym_ptr].int_value = 0;
+	sym_ptr++;
+}
+
+/*======================END=========================*/
 
 int const_defination()//常量定义
 {
+	int position;
+	int temp_str[MAX_OP_LEN];
 	if (sym == INTSYM)
 	{
 		sym = getsym();
 		if (sym != IDSYM)
 		{
 			error(DECLARATION_SHOULD_HAVE_A_ID);
+			return 0;
+		}
+		position = search_sym(id);
+		if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+		{
+			error(DUPLICATE_DEFINE_CONST);
 			return 0;
 		}
 		sym = getsym();
@@ -21,12 +78,24 @@ int const_defination()//常量定义
 		}
 		sym = getsym();
 		integer();
+		add_sym(id, TYPE_CONST, TYPE_VALUE_INT, num_sign, 0, NULL);
+		sprintf(temp_str, "%d", num_sign);
+		if(in_func)
+			emit(CONST, "INT", "", temp_str);
+		else
+			emit(CONST, "INT", id, temp_str);
 		while (sym == COMMASYM)
 		{
 			sym = getsym();
 			if (sym != IDSYM)
 			{
 				error(DECLARATION_SHOULD_HAVE_A_ID);
+				return 0;
+			}
+			position = search_sym(id);
+			if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+			{
+				error(DUPLICATE_DEFINE_CONST);
 				return 0;
 			}
 			sym = getsym();
@@ -37,6 +106,12 @@ int const_defination()//常量定义
 			}
 			sym = getsym();
 			integer();
+			add_sym(id, TYPE_CONST, TYPE_VALUE_INT, num_sign, 0, NULL);
+			sprintf(temp_str, "%d", num_sign);
+			if (in_func)
+				emit(CONST, "INT", "", temp_str);
+			else
+				emit(CONST, "INT", id, temp_str);
 		}
 		printf("Line:%d --This is a const_defination_statement!\n", line+1);
 		return 1;
@@ -47,6 +122,12 @@ int const_defination()//常量定义
 		if (sym != IDSYM)
 		{
 			error(DECLARATION_SHOULD_HAVE_A_ID);
+			return 0;
+		}
+		position = search_sym(id);
+		if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+		{
+			error(DUPLICATE_DEFINE_CONST);
 			return 0;
 		}
 		sym = getsym();
@@ -61,6 +142,12 @@ int const_defination()//常量定义
 			error(WRONG_ASSIGN_SYNTAX);
 			return 0;
 		}
+		add_sym(id, TYPE_CONST, TYPE_VALUE_CHAR, 0, c, NULL);
+		sprintf(temp_str, "%d", c);
+		if (in_func)
+			emit(CONST, "CHAR", "", temp_str);
+		else
+			emit(CONST, "CHAR", id, temp_str);
 		sym = getsym();
 		while (sym == COMMASYM)
 		{
@@ -68,6 +155,12 @@ int const_defination()//常量定义
 			if (sym != IDSYM)
 			{
 				error(DECLARATION_SHOULD_HAVE_A_ID);
+				return 0;
+			}
+			position = search_sym(id);
+			if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+			{
+				error(DUPLICATE_DEFINE_CONST);
 				return 0;
 			}
 			sym = getsym();
@@ -82,6 +175,12 @@ int const_defination()//常量定义
 				error(WRONG_ASSIGN_SYNTAX);
 				return 0;
 			}
+			add_sym(id, TYPE_CONST, TYPE_VALUE_CHAR, 0, c, NULL);
+			sprintf(temp_str, "%d", c);
+			if (in_func)
+				emit(CONST, "CHAR", "", temp_str);
+			else
+				emit(CONST, "CHAR", id, temp_str);
 			sym = getsym();
 		}
 		printf("Line:%d --This is a const_defination_statement!\n", line+1);
@@ -110,9 +209,19 @@ int const_declaration()
 }
 int var_defination()
 {
-	if (!head())
+	int position;
+	char temp_str[MAX_OP_LEN];
+	int head_type;
+	head_type = head();
+	if (head_type==0)
 	{
 		error(WRONG_HEAD);
+		return 0;
+	}
+	position = search_sym(id);
+	if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+	{
+		error(DUPLICATE_DEFINE_VAR);
 		return 0;
 	}
 	if (sym == LMPARENSYM)
@@ -123,22 +232,60 @@ int var_defination()
 			error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
 			return 0;
 		}
+		sprintf(temp_str, "%d", num);
 		sym = getsym();
 		if (sym != RMPARENSYM)
 		{
 			error(PARENT_DISMATCH);
 			return 0;
 		}
+		if (head_type == 1)
+		{
+			add_sym(id, TYPE_ARRAY, TYPE_VALUE_INT, num, 0, NULL);
+			if (in_func)
+				emit(CONST, "INT", "", temp_str);
+			else
+				emit(CONST, "INT", id, temp_str);
+		}
+		else
+		{
+			add_sym(id, TYPE_ARRAY, TYPE_VALUE_CHAR, num, 0, NULL);
+			if (in_func)
+				emit(CONST, "CHAR", "", temp_str);
+			else
+				emit(CONST, "CHAR", id, temp_str);
+		}
 		sym = getsym();
 	}
-	if (!var_defination_backend())
+	else
+	{
+		if (head_type == 1)
+		{
+			add_sym(id, TYPE_VAR, TYPE_VALUE_INT, 0, 0, NULL);
+			if (in_func)
+				emit(CONST, "INT", "", "");
+			else
+				emit(CONST, "INT", id, "");
+		}
+		else
+		{
+			add_sym(id, TYPE_VAR, TYPE_VALUE_CHAR, 0, 0, NULL);
+			if (in_func)
+				emit(CONST, "CHAR", "", "");
+			else
+				emit(CONST, "CHAR", id, "");
+		}
+	}
+	if (!var_defination_backend(head_type))
 	{
 		return 0;
 	}
 	return 1;
 }
-int var_defination_backend()
+int var_defination_backend(int head_type)
 {
+	int position;
+	char temp_str[MAX_OP_LEN];
 	if (sym == SEMICOLONSYM)
 	{
 		printf("Line:%d --This is a var_defination_statement!\n", line+1);
@@ -157,6 +304,12 @@ int var_defination_backend()
 			error(ERROR_VARIABLEDELARTION);
 			return 0;
 		}
+		position = search_sym(id);
+		if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+		{
+			error(DUPLICATE_DEFINE_VAR);
+			return 0;
+		}
 		sym = getsym();
 		if (sym == LMPARENSYM)//数组
 		{
@@ -166,13 +319,49 @@ int var_defination_backend()
 				error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
 				return 0;
 			}
+			sprintf(temp_str, "%d", num);
 			sym = getsym();
 			if (sym != RMPARENSYM)
 			{
 				error(PARENT_DISMATCH);
 				return 0;
 			}
+			if (head_type == 1)
+			{
+				add_sym(id, TYPE_ARRAY, TYPE_VALUE_INT, num, 0, NULL);
+				if (in_func)
+					emit(CONST, "INT", "", temp_str);
+				else
+					emit(CONST, "INT", id, temp_str);
+			}
+			else
+			{
+				add_sym(id, TYPE_ARRAY, TYPE_VALUE_CHAR, num, 0, NULL);
+				if (in_func)
+					emit(CONST, "CHAR", "", temp_str);
+				else
+					emit(CONST, "CHAR", id, temp_str);
+			}
 			sym = getsym();
+		}
+		else
+		{
+			if (head_type == 1)
+			{
+				add_sym(id, TYPE_VAR, TYPE_VALUE_INT, 0, 0, NULL);
+				if (in_func)
+					emit(CONST, "INT", "", "");
+				else
+					emit(CONST, "INT", id, "");
+			}
+			else
+			{
+				add_sym(id, TYPE_VAR, TYPE_VALUE_CHAR, 0, 0, NULL);
+				if (in_func)
+					emit(CONST, "CHAR", "", "");
+				else
+					emit(CONST, "CHAR", id, "");
+			}
 		}
 	}
 	printf("Line:%d --This is a var_defination_statement!\n", line+1);
@@ -194,18 +383,33 @@ int var_declaration()
 }
 int integer()
 {
-	if (sym == PLUSSYM || sym == MINUSSYM)
+	int flag = 0;
+	if (sym == PLUSSYM)
 	{
+		sym = getsym();
+	}
+	else if (sym == MINUSSYM)
+	{
+		flag = 1;
 		sym = getsym();
 	}
 	if (sym == NUMSYM)
 	{
 		sym = getsym();
+		if (flag)//说明有负号
+		{
+			num_sign = -num;
+		}
+		else
+		{
+			num_sign = num;
+		}
 		return 1;
 	}
 	else if (sym == ZEROSYM)
 	{
 		sym = getsym();
+		num_sign = num;
 		return 1;
 	}
 	else
@@ -214,15 +418,29 @@ int integer()
 		return 0;
 	}
 }
-int head()
+int head()//0为错误，1为int,2为char
 {
-	if (sym == INTSYM || sym == CHARSYM)
+	if (sym == INTSYM)
 	{
 		sym = getsym();
 		if (sym == IDSYM)
 		{
 			sym = getsym();
 			return 1;
+		}
+		else
+		{
+			error(WRONG_HEAD);
+			return 0;
+		}
+	}
+	else if (sym == CHARSYM)
+	{
+		sym = getsym();
+		if (sym == IDSYM)
+		{
+			sym = getsym();
+			return 2;
 		}
 		else
 		{

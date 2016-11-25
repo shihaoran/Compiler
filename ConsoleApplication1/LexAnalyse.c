@@ -1,14 +1,5 @@
 #include "LexAnalyse.h"
 
-
-
-char token[MAX_TOKEN_LEN];
-int tokenptr = 0;
-char ch;
-int num;
-int line = 0;
-int id[MAX_ID_LEN];
-int strflag = 0;
 FILE *src;
 
 
@@ -180,6 +171,8 @@ int getsym()
 			isWhich(ch) == DIGITC || isWhich(ch) == LETTERC || isWhich(ch) == DIGITC0)
 		{
 			catToken(ch);
+			//TODO:放在这里欠考虑
+			c = ch;
 			readch();
 			if (isWhich(ch) == SQUOTESYM)
 			{

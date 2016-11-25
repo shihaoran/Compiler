@@ -93,6 +93,10 @@ int error(int errortype)
 		printf("error in default"); break;
 	case ERROR_IN_RETURN:
 		printf("error in return"); break;
+	case DUPLICATE_DEFINE_CONST:
+		printf("duplicate define const"); break;
+	case DUPLICATE_DEFINE_VAR:
+		printf("duplicate define connst"); break;
 	}
 	printf( " in line %d\n", line + 1);
 	return errortype;

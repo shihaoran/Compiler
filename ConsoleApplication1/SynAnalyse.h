@@ -1,3 +1,6 @@
+#include "error.h"
+#include "LexAnalyse.h"
+
 int const_defination();
 int const_declaration();
 int var_defination();
@@ -26,6 +29,7 @@ int expression();
 int item();
 int factor();
 int program();
+
 #define MAX_ID_LEN 128 //标识符最长值
 #define MAX_STR_LEN 512 //字符串最长值
 #define MAX_STR_TAB_LEN 512 //字符串数组最长值
@@ -72,6 +76,22 @@ struct sym_record
 	};
 } sym_table[MAX_TAB_LEN];
 
+enum sym_type {
+	TYPE_INIT,
+	TYPE_CONST,
+	TYPE_VAR,
+	TYPE_FUNC,
+	TYPE_ARRAY,
+	TYPE_PARA,
+	TYPE_TMP,	
+};
+
+enum sym_value_type {
+	TYPE_VALUE_INIT,
+	TYPE_VALUE_INT,
+	TYPE_VALUE_CHAR,
+	TYPE_VALUE_STR,
+};
 /********定义四元式枚举类型助记符*******/
 enum quat_op {
 	CONST,
@@ -134,5 +154,11 @@ int quat_ptr = 0;//四元式指针
 int str_ptr = 0;//字符串常量指针
 int label_ptr = 0;//当前label指针
 int tmp_ptr = 0;//当前临时变量号指针
+
+/********一些全局变量*******/
+int in_func = 0;//是否在函数内，0为否1为真
+extern int num;//词法分析中生成的数字
+extern char c;//词法分析中生成的字符
+int num_sign;//加入了符号后的数字
 			
 /*===================END=================*/
