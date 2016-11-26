@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include"error.h"
 #include"LexAnalyse.h"
+
 extern int line;
 int errnum = 0;
 int error(int errortype)
@@ -93,10 +94,10 @@ int error(int errortype)
 		printf("error in default"); break;
 	case ERROR_IN_RETURN:
 		printf("error in return"); break;
-	case DUPLICATE_DEFINE_CONST:
-		printf("duplicate define const"); break;
-	case DUPLICATE_DEFINE_VAR:
-		printf("duplicate define connst"); break;
+	case DUPLICATE_DEFINE_IDENTIFIER:
+		printf("duplicate define identifier"); break;
+	case OP_OUT_OF_RANGE:
+		printf("op out of range"); break;
 	}
 	printf( " in line %d\n", line + 1);
 	return errortype;

@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef ERROR_H
 #define ERROR_H
 enum errorname
@@ -49,8 +51,8 @@ enum errorname
 	TOO_MANY_CODE_AFTER_MAIN_FUNCTION,
 	MISSING_SENTENCE,
 	//”Ô∑®∑÷Œˆ¥ÌŒÛ
-	DUPLICATE_DEFINE_CONST,
-	DUPLICATE_DEFINE_VAR,
+	DUPLICATE_DEFINE_IDENTIFIER,
+	OP_OUT_OF_RANGE
 };
 int error(int errortype);
 #endif

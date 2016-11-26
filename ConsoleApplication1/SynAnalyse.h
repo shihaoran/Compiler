@@ -1,18 +1,20 @@
-#include "error.h"
-#include "LexAnalyse.h"
+#pragma once
+
+#ifndef SYNANALYSE_H
+#define SYNANALYSE_H
 
 int const_defination();
 int const_declaration();
 int var_defination();
-int var_defination_backend();
+int var_defination_backend(int head_type);
 int var_declaration();
 int integer();
 int head();
 int value_parameter_table();
 int parameter_table();
 int void_func_defination();
-int return_func_defination();
-int return_func_defination_backend();
+int return_func_defination(int head_type);
+int return_func_defination_backend(int head_type);
 int main_func();
 int compound_statement();
 int statement();
@@ -36,13 +38,6 @@ int program();
 #define MAX_TAB_LEN 512 //符号表最长值
 #define MAX_OP_LEN 32 //操作数最长值
 #define MAX_QUAT_LEN 1024 //四元式组最长值
-
-/*=================语法分析部分=====================*/
-int sym;//全局符号
-extern int line;//当前行
-extern char id[MAX_ID_LEN];//最后读入的标识符
-			
-/*======================END=========================*/
 
 /*=================生成四元式部分===================*/
 
@@ -150,10 +145,11 @@ const str_table[MAX_STR_TAB_LEN][MAX_STR_LEN];
 int sym_ptr = 0;//当前符号表尽头指针
 int para_ptr = 0;//函数调用参数起始位置
 int local_ptr = 0;//函数调用局部变量起始位置
+int tmp_ptr = 0;//函数调用临时变量起始位置
 int quat_ptr = 0;//四元式指针
 int str_ptr = 0;//字符串常量指针
 int label_ptr = 0;//当前label指针
-int tmp_ptr = 0;//当前临时变量号指针
+
 
 /********一些全局变量*******/
 int in_func = 0;//是否在函数内，0为否1为真
@@ -162,3 +158,5 @@ extern char c;//词法分析中生成的字符
 int num_sign;//加入了符号后的数字
 			
 /*===================END=================*/
+#endif
+

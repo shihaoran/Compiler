@@ -1,5 +1,13 @@
 #include "LexAnalyse.h"
 
+char token[MAX_TOKEN_LEN];
+int tokenptr = 0;
+int num;//最后一个读入的数字
+char c;//最后一个读入的字符
+char ch;
+int line = 0;
+char id[MAX_ID_LEN];
+int strflag = 0;
 FILE *src;
 
 

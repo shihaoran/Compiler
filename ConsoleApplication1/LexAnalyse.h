@@ -1,18 +1,20 @@
+#pragma once
+
 #include<stdio.h>
 #include<string.h>
 #include "error.h"
 
+#ifndef LEXANALYSE_H
+#define LEXANALYSE_H
+
 #define MAX_TOKEN_LEN 128 // 缓冲区最长值
 #define MAX_ID_LEN 128 //标识符最长值
 
-char token[MAX_TOKEN_LEN];
-int tokenptr = 0;
-int num;//最后一个读入的数字
-char c;//最后一个读入的字符
-char ch;
-int line = 0;
-int id[MAX_ID_LEN];
-int strflag = 0;
+extern char token[MAX_TOKEN_LEN];
+extern int num;//最后一个读入的数字
+extern char c;//最后一个读入的字符
+extern int line;
+extern char id[MAX_ID_LEN];
 
 
 void clearToken();
@@ -78,3 +80,4 @@ enum symtype
 	EXCLAMC,  // !
 	ZEROSYM, //0
 };
+#endif

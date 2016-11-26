@@ -1,4 +1,12 @@
 #include "SynAnalyse.h"
+#include "error.h"
+#include "LexAnalyse.h"
+
+/*=================语法分析部分=====================*/
+int sym;//全局符号
+extern int line;//当前行
+extern char id[MAX_ID_LEN];//最后读入的标识符
+/*======================END=========================*/
 
 /*=================四元式生成部分=====================*/
 int search_sym(char *name)//寻找当前标识符在符号表中的位置
@@ -49,13 +57,83 @@ void add_sym(char *name, int type, int value_type, int int_v, char char_v, char*
 		sym_table[sym_ptr].int_value = 0;
 	sym_ptr++;
 }
+int add_tmp(char *name, int type)
+{
+	sprintf(name, "$%d", sym_ptr-tmp_ptr);
+	add_sym(name, TYPE_TMP, type, 0, 0, NULL);
+	return sym_ptr - 1;
+}
+int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0为符号表指针，1为int立即数, 2为char立即数, 3为数组（在下层，此处不会返回3）
+{
+	char tmp[MAX_OP_LEN];
+	char tmp1[MAX_OP_LEN];
+	int tmp_type;
+	if (type == 0)
+	{
+		if (i < 0)
+		{
+			error(OP_OUT_OF_RANGE);
+			return 4;
+		}
+		else if (i < para_ptr)//如果是全局变量
+		{
+			sprintf(name, "%s", sym_table[i].name);
+		}
+		else if (i < local_ptr)//如果是参数
+		{
+			sprintf(name, "@%d", i-para_ptr);
+		}
+		else if (i < tmp_ptr)//如果是局部变量
+		{
+			sprintf(name, "%%%d", i - local_ptr);
+		}
+		else //如果是临时变量
+		{
+			sprintf(name, "$%d", i - tmp_ptr);
+		}
+		return sym_table[i].value_type;
+	}
+	else if (type == 1 || type == 2)
+	{
+		sprintf(name, "%d", i);
+		return type;
+	}
+	else if (type == 3)//数组
+	{
+		if (i < para_ptr)
+		{
+			strcpy(name,sym_table[i].name);
+		}
+		else
+		{
+			sprintf(name, "%%%d", i-local_ptr);
+		}
+		if (array_i_type)//0为符号表指针，1为整数
+		{
+			sprintf(tmp, "[%d]", i);
+			strcat(name, tmp);
+		}
+		else//如果是符号表指针，生成相应的变量号
+		{
+			tmp_type=gen_op(tmp, array_i, 0, 0, 0);//TODO：如果是char?
+			sprintf(tmp1, "[%s]", tmp);
+			strcat(name, tmp1);
+		}
+		return sym_table[i].value_type;
+	}
+	else
+	{
+		error(OP_OUT_OF_RANGE);
+		return 4;
+	}
+}
 
 /*======================END=========================*/
 
 int const_defination()//常量定义
 {
 	int position;
-	int temp_str[MAX_OP_LEN];
+	char temp_str[MAX_OP_LEN];
 	if (sym == INTSYM)
 	{
 		sym = getsym();
@@ -67,7 +145,7 @@ int const_defination()//常量定义
 		position = search_sym(id);
 		if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 		{
-			error(DUPLICATE_DEFINE_CONST);
+			error(DUPLICATE_DEFINE_IDENTIFIER);
 			return 0;
 		}
 		sym = getsym();
@@ -95,7 +173,7 @@ int const_defination()//常量定义
 			position = search_sym(id);
 			if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 			{
-				error(DUPLICATE_DEFINE_CONST);
+				error(DUPLICATE_DEFINE_IDENTIFIER);
 				return 0;
 			}
 			sym = getsym();
@@ -127,7 +205,7 @@ int const_defination()//常量定义
 		position = search_sym(id);
 		if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 		{
-			error(DUPLICATE_DEFINE_CONST);
+			error(DUPLICATE_DEFINE_IDENTIFIER);
 			return 0;
 		}
 		sym = getsym();
@@ -160,7 +238,7 @@ int const_defination()//常量定义
 			position = search_sym(id);
 			if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 			{
-				error(DUPLICATE_DEFINE_CONST);
+				error(DUPLICATE_DEFINE_IDENTIFIER);
 				return 0;
 			}
 			sym = getsym();
@@ -221,7 +299,7 @@ int var_defination()
 	position = search_sym(id);
 	if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 	{
-		error(DUPLICATE_DEFINE_VAR);
+		error(DUPLICATE_DEFINE_IDENTIFIER);
 		return 0;
 	}
 	if (sym == LMPARENSYM)
@@ -243,17 +321,17 @@ int var_defination()
 		{
 			add_sym(id, TYPE_ARRAY, TYPE_VALUE_INT, num, 0, NULL);
 			if (in_func)
-				emit(CONST, "INT", "", temp_str);
+				emit(VAR, "INT", "", temp_str);
 			else
-				emit(CONST, "INT", id, temp_str);
+				emit(VAR, "INT", id, temp_str);
 		}
 		else
 		{
 			add_sym(id, TYPE_ARRAY, TYPE_VALUE_CHAR, num, 0, NULL);
 			if (in_func)
-				emit(CONST, "CHAR", "", temp_str);
+				emit(VAR, "CHAR", "", temp_str);
 			else
-				emit(CONST, "CHAR", id, temp_str);
+				emit(VAR, "CHAR", id, temp_str);
 		}
 		sym = getsym();
 	}
@@ -263,17 +341,17 @@ int var_defination()
 		{
 			add_sym(id, TYPE_VAR, TYPE_VALUE_INT, 0, 0, NULL);
 			if (in_func)
-				emit(CONST, "INT", "", "");
+				emit(VAR, "INT", "", "");
 			else
-				emit(CONST, "INT", id, "");
+				emit(VAR, "INT", id, "");
 		}
 		else
 		{
 			add_sym(id, TYPE_VAR, TYPE_VALUE_CHAR, 0, 0, NULL);
 			if (in_func)
-				emit(CONST, "CHAR", "", "");
+				emit(VAR, "CHAR", "", "");
 			else
-				emit(CONST, "CHAR", id, "");
+				emit(VAR, "CHAR", id, "");
 		}
 	}
 	if (!var_defination_backend(head_type))
@@ -307,7 +385,7 @@ int var_defination_backend(int head_type)
 		position = search_sym(id);
 		if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 		{
-			error(DUPLICATE_DEFINE_VAR);
+			error(DUPLICATE_DEFINE_IDENTIFIER);
 			return 0;
 		}
 		sym = getsym();
@@ -330,17 +408,17 @@ int var_defination_backend(int head_type)
 			{
 				add_sym(id, TYPE_ARRAY, TYPE_VALUE_INT, num, 0, NULL);
 				if (in_func)
-					emit(CONST, "INT", "", temp_str);
+					emit(VAR, "INT", "", temp_str);
 				else
-					emit(CONST, "INT", id, temp_str);
+					emit(VAR, "INT", id, temp_str);
 			}
 			else
 			{
 				add_sym(id, TYPE_ARRAY, TYPE_VALUE_CHAR, num, 0, NULL);
 				if (in_func)
-					emit(CONST, "CHAR", "", temp_str);
+					emit(VAR, "CHAR", "", temp_str);
 				else
-					emit(CONST, "CHAR", id, temp_str);
+					emit(VAR, "CHAR", id, temp_str);
 			}
 			sym = getsym();
 		}
@@ -350,17 +428,17 @@ int var_defination_backend(int head_type)
 			{
 				add_sym(id, TYPE_VAR, TYPE_VALUE_INT, 0, 0, NULL);
 				if (in_func)
-					emit(CONST, "INT", "", "");
+					emit(VAR, "INT", "", "");
 				else
-					emit(CONST, "INT", id, "");
+					emit(VAR, "INT", id, "");
 			}
 			else
 			{
 				add_sym(id, TYPE_VAR, TYPE_VALUE_CHAR, 0, 0, NULL);
 				if (in_func)
-					emit(CONST, "CHAR", "", "");
+					emit(VAR, "CHAR", "", "");
 				else
-					emit(CONST, "CHAR", id, "");
+					emit(VAR, "CHAR", id, "");
 			}
 		}
 	}
@@ -481,14 +559,27 @@ int value_parameter_table()
 }
 int parameter_table()
 {
+	int position;
+	int para_type;
 	if (sym == INTSYM || sym == CHARSYM)
 	{
+		if (sym == INTSYM)
+			para_type = 1;
+		else
+			para_type = 2;
 		sym = getsym();
 		if (sym != IDSYM)
 		{
 			error(ERROR_PARAMETER);
 			return 0;
 		}
+		position = search_sym(id);
+		if (position >= para_ptr) 
+		{
+			error(DUPLICATE_DEFINE_IDENTIFIER);
+			return 0;
+		}
+		add_sym(id, TYPE_PARA, para_type, 0, 0, NULL);
 		sym = getsym();
 		while (sym == COMMASYM)//处理逗号
 		{
@@ -504,6 +595,13 @@ int parameter_table()
 				error(ERROR_PARAMETER);
 				return 0;
 			}
+			position = search_sym(id);
+			if (position >= para_ptr)
+			{
+				error(DUPLICATE_DEFINE_IDENTIFIER);
+				return 0;
+			}
+			add_sym(id, TYPE_PARA, para_type, 0, 0, NULL);
 			sym = getsym();
 		}
 		if (sym != RPARENSYM)
@@ -511,11 +609,13 @@ int parameter_table()
 			error(ERROR_PARAMETER);
 			return 0;
 		}
+		local_ptr = sym_ptr;
 		return 1;
 	}
 	else if(sym == RPARENSYM)//为空
 	{
 		return 1;
+		local_ptr = sym_ptr;
 	}
 	else
 	{
@@ -566,21 +666,32 @@ int void_func_defination()
 	sym = getsym();
 	return 1;
 }
-int return_func_defination()
+int return_func_defination(int head_type)
 {
 	if (!head())
 		return 0;
-	if (!return_func_defination_backend())
+	if (!return_func_defination_backend(head_type))
 		return 0;
 	return 1;
 }
-int return_func_defination_backend()
+int return_func_defination_backend(int head_type)
 {
+	int position;
+	in_func = 1;
 	if (sym != LPARENSYM)
 	{
 		error(ERROR_PARAMETER);
 		return 0;
 	}
+	position = search_sym(id);
+	if (position >= 0 )
+	{
+		error(DUPLICATE_DEFINE_IDENTIFIER);
+		return 0;
+	}
+	add_sym(id, TYPE_FUNC, head_type, 0, 0, NULL);
+	emit(FUNC, id, "", "");
+	para_ptr = sym_ptr;
 	sym = getsym();
 	parameter_table();
 	if (sym != RPARENSYM)
@@ -1163,27 +1274,92 @@ int return_statement()
 	}//TODO:统一结束处理
 	return 1;
 }
-int expression()//表达式
+int expression(int *type)//表达式,传入的指针表示返回的数的类型，0为符号表指针，1为int立即数,2为char立即数,3为数组（在下层，此处不会返回3），4为报错此时返回-1
 {
-	if (sym == PLUSSYM || sym == MINUSSYM)
+	char op_1[MAX_OP_LEN] = { 0 };
+	char op_2[MAX_OP_LEN] = { 0 };
+	char op_r[MAX_OP_LEN] = { 0 };
+	int i,array_i,array_i_type;
+	int tmp_type1,tmp_type2;
+	int first;//保存最开始的符号
+	int flag=0;//是否只有一项
+	int op;//多项时当前是正负号
+	if (sym == PLUSSYM || sym == MINUSSYM)//为了能够直接 
 	{
+		first = (sym == PLUSSYM) ? 0 : 1;
 		sym = getsym();
 	}
-	if (!item())
+	i=item(type,&array_i,&array_i_type);
+	if (*type == 4)
 	{
-		return 0;
+		return -1;
+	}
+	else if (*type == 3)//说明是数组
+	{
+		*type = gen_op(op_1, i, *type, array_i, array_i_type);
+		i = add_tmp(op_r, *type);
+		emit(MOV, op_1, "",op_r);
+		*type = 0;
 	}
 	while (sym == PLUSSYM || sym == MINUSSYM)
 	{
-		sym = getsym();
-		if (!item())
+		flag = 1;
+		op = (sym == PLUSSYM) ? ADD : SUB;
+		if (first)//开始有一个负号，结束后把结果放到op1中
 		{
-			return 0;
+			if (*type == 1 || *type == 2) //如果是立即数,取负存入临时变量
+			{
+				tmp_type1 = gen_op(op_2,-i,*type,array_i,array_i_type);
+				i = add_tmp(op_1, tmp_type1);
+				emit(MOV, op_2, "", op_1);
+			}
+			else//如果不是，是指针，新增临时变量取反
+			{
+				tmp_type1 = gen_op(op_2, i, *type, array_i, array_i_type);
+				i = add_tmp(op_1, tmp_type1);
+				emit(NEG, op_2, "", op_1);
+			}
+			*type = 0;
+			first = 0;
+		}
+		else
+		{
+			tmp_type1 = gen_op(op_1, i, *type, array_i, array_i_type);
+		}
+		sym = getsym();
+		i = item(type, &array_i, &array_i_type);
+		if (*type == 4)
+		{
+			return -1;
+		}
+		tmp_type2 = gen_op(op_2, i, *type, array_i, array_i_type);
+		if (tmp_type1 == 2 && tmp_type2 == 2)
+		{
+			i = add_tmp(op_r, 2);
+		}
+		else
+		{
+			i = add_tmp(op_r, 1);
+		}
+		emit(op, op_1, op_2, op_r);
+		*type = 0;
+	}
+	if (!flag)//如果只有一项
+	{
+		if ((*type == 1 || *type == 2)&&first)//如果是立即数,直接返回负值
+		{
+			i = -i;
+		}
+		else
+		{
+			*type = gen_op(op_1, i, *type, array_i, array_i_type);
+			i = add_tmp(op_r, *type);
+			emit(NEG, op_1, "", op_r);//如果不是，是指针，新增临时变量取反
 		}
 	}
-	return 1;
+	return i;
 }
-int item()//项
+int item(int *type,int *array_i,int *array_i_type)//项
 {
 	if (!factor())
 	{
@@ -1272,6 +1448,9 @@ int program()
 {
 	int main_cnt = 0;
 	int var_flag = 0;//在主程序中的函数定义后不应该有变量说明
+	int head_type;
+	int position;
+	char temp_str[MAX_OP_LEN];
 	sym = getsym();
 	if (sym == CONSTSYM)//常量说明
 	{
@@ -1308,7 +1487,18 @@ int program()
 		}
 		else//int char
 		{
-			head();
+			head_type=head();
+			if (head_type == 0)
+			{
+				error(WRONG_HEAD);
+				return 0;
+			}
+			position = search_sym(id);
+			if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
+			{
+				error(DUPLICATE_DEFINE_IDENTIFIER);
+				return 0;
+			}
 			if (sym == LMPARENSYM)//数组
 			{
 				if (var_flag == 1)
@@ -1322,11 +1512,28 @@ int program()
 					error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
 					return 0;
 				}
+				sprintf(temp_str, "%d", num);
 				sym = getsym();
 				if (sym != RMPARENSYM)
 				{
 					error(PARENT_DISMATCH);
 					return 0;
+				}
+				if (head_type == 1)
+				{
+					add_sym(id, TYPE_ARRAY, TYPE_VALUE_INT, num, 0, NULL);
+					if (in_func)
+						emit(VAR, "INT", "", temp_str);
+					else
+						emit(VAR, "INT", id, temp_str);
+				}
+				else
+				{
+					add_sym(id, TYPE_ARRAY, TYPE_VALUE_CHAR, num, 0, NULL);
+					if (in_func)
+						emit(VAR, "CHAR", "", temp_str);
+					else
+						emit(VAR, "CHAR", id, temp_str);
 				}
 				sym = getsym();
 				if (sym == SEMICOLONSYM)
@@ -1336,7 +1543,7 @@ int program()
 				}
 				else if (sym == COMMASYM)
 				{
-					var_defination_backend();//说明一行有多个定义
+					var_defination_backend(head_type);//说明一行有多个定义
 					if (sym == SEMICOLONSYM)
 					{
 						//TODO：这里打印
@@ -1352,7 +1559,23 @@ int program()
 					error(VAR_DECLARATION_AFTER_FUNC);
 					return 0;
 				}
-				var_defination_backend();//说明一行有多个定义
+				if (head_type == 1)
+				{
+					add_sym(id, TYPE_VAR, TYPE_VALUE_INT, 0, 0, NULL);
+					if (in_func)
+						emit(VAR, "INT", "", "");
+					else
+						emit(VAR, "INT", id, "");
+				}
+				else
+				{
+					add_sym(id, TYPE_VAR, TYPE_VALUE_CHAR, 0, 0, NULL);
+					if (in_func)
+						emit(VAR, "CHAR", "", "");
+					else
+						emit(VAR, "CHAR", id, "");
+				}
+				var_defination_backend(head_type);//说明一行有多个定义
 				if (sym == SEMICOLONSYM)
 				{
 					//TODO：这里打印
@@ -1367,13 +1590,29 @@ int program()
 					error(VAR_DECLARATION_AFTER_FUNC);
 					return 0;
 				}
+				if (head_type == 1)
+				{
+					add_sym(id, TYPE_VAR, TYPE_VALUE_INT, 0, 0, NULL);
+					if (in_func)
+						emit(VAR, "INT", "", "");
+					else
+						emit(VAR, "INT", id, "");
+				}
+				else
+				{
+					add_sym(id, TYPE_VAR, TYPE_VALUE_CHAR, 0, 0, NULL);
+					if (in_func)
+						emit(VAR, "CHAR", "", "");
+					else
+						emit(VAR, "CHAR", id, "");
+				}
 				printf("Line:%d --This is a var_defination_statement!\n", line + 1);
 				sym = getsym();
 				continue;
 			}
 			else if (sym == LPARENSYM)//说明是有返回值函数定义
 			{
-				return_func_defination_backend();
+				return_func_defination_backend(head_type);
 				var_flag = 1;
 			}
 			else
@@ -1394,7 +1633,14 @@ int program()
 }
 
 
-
+void print_quat()
+{
+	int i;
+	for (i = 0; i < quat_ptr; i++)
+	{
+		printf("%s   %s   %s   %s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
+	}
+}
 
 
 int main()
@@ -1402,5 +1648,6 @@ int main()
 	int result,i=0;
 	init();
 	program();
+	print_quat();
 	scanf("%d", &result);
 }
