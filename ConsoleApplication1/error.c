@@ -96,6 +96,14 @@ int error(int errortype)
 		printf("error in return"); break;
 	case DUPLICATE_DEFINE_IDENTIFIER:
 		printf("duplicate define identifier"); break;
+	case NONE_DEFINE_IDENTIFIER:
+		printf("none define identifier"); break;
+	case THIS_IS_NOT_ARRAY:
+		printf("this is not array"); break;
+	case THIS_IS_NOT_FUNC:
+		printf("this is not function"); break;
+	case IDENTIFIER_TYPE_DISMATCH:
+		printf("identifier type dismatch"); break;
 	case OP_OUT_OF_RANGE:
 		printf("op out of range"); break;
 	}

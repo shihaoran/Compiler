@@ -532,28 +532,104 @@ int head()//0为错误，1为int,2为char
 		return 0;
 	}
 }
-int value_parameter_table()
+int call_func(int i)
 {
+	if (sym_table[i].type != TYPE_FUNC)
+	{
+		error(THIS_IS_NOT_FUNC);
+		return -1;
+	}
+	if (!value_parameter_table(i))
+	{
+		return 4;
+	}
+	emit(CALL, sym_table[i].name, "", "");
+	if (sym != RPARENSYM)
+	{
+		error(PARENT_DISMATCH);
+		return 4;
+	}
+	sym = getsym();
+	return sym_table[i].value_type;
+}
+int value_parameter_table(int i)
+{
+	int now_ptr;//当前参数指针
+	int stack_ptr = 0;//栈指针
+	int j;//表达式返回值
+	int type;//表达式返回类型
+	char para_stack[MAX_PARA_LEN][MAX_OP_LEN];
+	char op_1[MAX_OP_LEN];
 	if (sym == RPARENSYM)
 	{
-		return 1;
-	}
-	else
-	{
-		if (!expression())
+		if (sym_table[i + 1].type == TYPE_PARA)
 		{
 			error(ERROR_PARAMETER);
 			return 0;
 		}
+		return 1;
+	}
+	else
+	{
+		now_ptr = i + 1;
+		if (sym_table[now_ptr].type != TYPE_PARA)
+		{
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+		j = expression(&type);
+		if (type == 4 || j == -1)
+		{
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+		if ((type == 0 && sym_table[j].value_type == sym_table[now_ptr].value_type) ||
+			((type == 1 || type == 2) && type == sym_table[now_ptr].value_type))
+		{
+			gen_op(op_1, j, type, 0, 0);
+			strcpy(para_stack[stack_ptr], op_1);
+		}
+		else
+		{
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+		now_ptr++;
 		while (sym==COMMASYM)
 		{
 			sym = getsym();
-			if (!expression())
+			if (sym_table[now_ptr].type != TYPE_PARA)
 			{
 				error(ERROR_PARAMETER);
 				return 0;
 			}
+			j = expression(&type);
+			if (type == 4 || j == -1)
+			{
+				error(ERROR_PARAMETER);
+				return 0;
+			}
+			if ((type == 0 && sym_table[j].value_type == sym_table[now_ptr].value_type) ||
+				((type == 1 || type == 2) && type == sym_table[now_ptr].value_type))
+			{
+				gen_op(op_1, j, type, 0, 0);
+				strcpy(para_stack[stack_ptr++], op_1);
+			}
+			else
+			{
+				error(ERROR_PARAMETER);
+				return 0;
+			}
+			now_ptr++;
 		}
+		if (sym_table[now_ptr].type == TYPE_PARA)
+		{
+			error(ERROR_PARAMETER);
+			return 0;
+		}
+		stack_ptr--;
+		for(stack_ptr;stack_ptr>=0;stack_ptr--)
+			emit(PARA, para_stack[stack_ptr], "", "");
 		return 1;
 	}
 }
@@ -625,11 +701,21 @@ int parameter_table()
 }
 int void_func_defination()
 {
+	int position;
 	if (sym != IDSYM)
 	{
 		error(MISSING_IDENTIFIER);
 		return 0;
 	}
+	position = search_sym(id);
+	if (position >= 0)
+	{
+		error(DUPLICATE_DEFINE_IDENTIFIER);
+		return 0;
+	}
+	add_sym(id, TYPE_FUNC, TYPE_VALUE_INIT, 0, 0, NULL);
+	emit(FUNC, id, "", "");
+	para_ptr = sym_ptr;
 	sym = getsym();
 	if (sym != LPARENSYM)
 	{
@@ -1290,8 +1376,9 @@ int expression(int *type)//表达式,传入的指针表示返回的数的类型，0为符号表指针，1
 		sym = getsym();
 	}
 	i=item(type,&array_i,&array_i_type);
-	if (*type == 4)
+	if (*type == 4||i==-1)
 	{
+		*type = 4;
 		return -1;
 	}
 	else if (*type == 3)//说明是数组
@@ -1333,7 +1420,7 @@ int expression(int *type)//表达式,传入的指针表示返回的数的类型，0为符号表指针，1
 			return -1;
 		}
 		tmp_type2 = gen_op(op_2, i, *type, array_i, array_i_type);
-		if (tmp_type1 == 2 && tmp_type2 == 2)
+		if (tmp_type1 == 2 && tmp_type2 == 2)//如果两项中有一项为int，都转换为int
 		{
 			i = add_tmp(op_r, 2);
 		}
@@ -1361,88 +1448,151 @@ int expression(int *type)//表达式,传入的指针表示返回的数的类型，0为符号表指针，1
 }
 int item(int *type,int *array_i,int *array_i_type)//项
 {
-	if (!factor())
+	char op_1[MAX_OP_LEN] = { 0 };
+	char op_2[MAX_OP_LEN] = { 0 };
+	char op_r[MAX_OP_LEN] = { 0 };
+	int tmp_type1, tmp_type2;
+	int i;
+	int op;//当前是乘除号
+	i = factor(type, array_i, array_i_type);
+	if (*type == 4 || i == -1)
 	{
-		return 0;
+		*type = 4;
+		return -1;
 	}
 	while (sym == TIMESSYM || sym == DIVSYM)
 	{
+		tmp_type1 = gen_op(op_1, i, *type, array_i, array_i_type);
+		op = (sym == TIMESSYM) ? MUL : DIV;
 		sym = getsym();
-		if (!factor())
+		i = factor(type, array_i, array_i_type);
+		if (*type == 4 || i == -1)
 		{
-			return 0;
+			*type = 4;
+			return -1;
 		}
+		tmp_type2 = gen_op(op_2, i, *type, array_i, array_i_type);
+		if (tmp_type1 == 2 && tmp_type2 == 2)//如果两项中有一项为int，都转换为int
+		{
+			i = add_tmp(op_r, 2);
+		}
+		else
+		{
+			i = add_tmp(op_r, 1);
+		}
+		emit(op, op_1, op_2, op_r);
+		*type = 0;
 	}
-	return 1;
+	return i;
 }
-int factor()//因子
+int factor(int *type, int *array_i, int *array_i_type)//因子
 {
+	char op_1[MAX_OP_LEN] = { 0 };
+	char op_2[MAX_OP_LEN] = { 0 };
+	char op_r[MAX_OP_LEN] = { 0 };
+	int i;
+	*type = 0;//清空，其实只用上传
 	if (sym == IDSYM)//标识符，数组，有返回值函数调用
 	{
+		i = search_sym(id);
+		if (i < 0)
+		{
+			error(NONE_DEFINE_IDENTIFIER);
+			*type = 4;
+			return -1;
+		}
 		sym = getsym();
 		if (sym == LMPARENSYM)//数组
 		{
-			sym = getsym();
-			if (!expression())
+			if (sym_table[i].type != TYPE_ARRAY)
 			{
-				return 0;
+				error(THIS_IS_NOT_ARRAY);
+				*type = 4;
+				return -1;
 			}
+			sym = getsym();
+			*array_i = expression(type);
+			if (*type == 4 || *array_i == -1)
+			{
+				*type = 4;
+				return -1;
+			}
+			*array_i_type = *type;
+			*type = 3;
+			gen_op(op_1, i, *type, array_i, array_i_type);
+			i = add_tmp(op_r, sym_table[i].value_type);
+			emit(MOV, op_1, "", op_r);
+			*type = 0;
 			if (sym != RMPARENSYM)
 			{
 				error(PARENT_DISMATCH);
-				return 0;
+				*type = 4;
+				return -1;
 			}
 			sym = getsym();
 		}
 		else if (sym == LPARENSYM)//有返回值函数调用
 		{
 			sym = getsym();
-			if (!value_parameter_table())
+			i = call_func(i);
+			if (i==4)
 			{
-				return 0;
+				*type = 4;
+				return -1;
 			}
-			if (sym != RPARENSYM)
-			{
-				error(PARENT_DISMATCH);
-				return 0;
-			}
-			sym = getsym();
+			i = add_tmp(op_r, i);
+			emit(MOV, "!eax", "", op_r);
 		}
-		return 1;
+		else//普通变量常量参数
+		{
+			if (sym_table[i].type != TYPE_CONST&&sym_table[i].type != TYPE_VAR&&sym_table[i].type != TYPE_PARA)
+			{
+				error(IDENTIFIER_TYPE_DISMATCH);
+				*type = 4;
+				return -1;
+			}
+		}
 	}
 	else if (sym == PLUSSYM || sym == MINUSSYM || sym == NUMSYM || sym == ZEROSYM)
 	{
 		if (!integer())
 		{
-			return 0;
+			*type = 4;
+			return -1;
 		}
-		return 1;
+		i = num_sign;
+		*type = 1;
 	}
 	else if (sym == CHSYM)
 	{
 		sym = getsym();
-		return 1;
+		i = c;
+		*type = 2;
 	}
 	else if (sym == LPARENSYM)
 	{
 		sym = getsym();
-		if (!expression())
+		i = expression(type);
+		if (*type==4||i==-1)
 		{
-			return 0;
+			*type = 4;
+			return -1;
 		}
 		if (sym != RPARENSYM)
 		{
 			error(PARENT_DISMATCH);
-			return 0;
+			*type = 4;
+			return -1;
 		}
 		sym = getsym();
-		return 1;
 	}
 	else
 	{
 		error(ERROR_IN_EXPRESSION);
-		return 0;
+		*type = 4;
+		return -1;
 	}
+	return i;
 }
 int program()
 {

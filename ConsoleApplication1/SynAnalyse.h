@@ -37,6 +37,7 @@ int program();
 #define MAX_STR_TAB_LEN 512 //字符串数组最长值
 #define MAX_TAB_LEN 512 //符号表最长值
 #define MAX_OP_LEN 32 //操作数最长值
+#define MAX_PARA_LEN 32 //参数最长值
 #define MAX_QUAT_LEN 1024 //四元式组最长值
 
 /*=================生成四元式部分===================*/
@@ -46,7 +47,6 @@ int program();
 struct sym_record
 {
 	char name[MAX_ID_LEN];
-	int type;
 	/*
 	0 init
 	1 const
@@ -56,13 +56,14 @@ struct sym_record
 	5 para
 	6 tmp
 	*/
-	int value_type;
+	int type;
 	/*
 	0 init
 	1 int
 	2 char
 	3 str
 	*/
+	int value_type;
 	union
 	{
 		int int_value;
