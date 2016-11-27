@@ -96,8 +96,8 @@ int error(int errortype)
 		printf("error in return"); break;
 	case DUPLICATE_DEFINE_IDENTIFIER:
 		printf("duplicate define identifier"); break;
-	case NONE_DEFINE_IDENTIFIER:
-		printf("none define identifier"); break;
+	case UNDEFINE_IDENTIFIER:
+		printf("undefine identifier"); break;
 	case THIS_IS_NOT_ARRAY:
 		printf("this is not array"); break;
 	case THIS_IS_NOT_FUNC:
@@ -106,6 +106,14 @@ int error(int errortype)
 		printf("identifier type dismatch"); break;
 	case OP_OUT_OF_RANGE:
 		printf("op out of range"); break;
+	case RUTURN_FUNC_MUST_RETURN:
+		printf("return function must have a return value"); break;
+	case NRETURN_FUNC_CANT_RETURN:
+		printf("void fuction can't have a return value"); break;
+	case ASSIGN_ERROR:
+		printf("assign error"); break;
+	case ASSIGN_DISMATCH:
+		printf("dismatch type between assign statement"); break;
 	}
 	printf( " in line %d\n", line + 1);
 	return errortype;

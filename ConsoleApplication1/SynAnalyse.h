@@ -33,7 +33,7 @@ int factor();
 int program();
 
 #define MAX_ID_LEN 128 //标识符最长值
-#define MAX_STR_LEN 512 //字符串最长值
+#define MAX_STR_LEN 128 //字符串最长值
 #define MAX_STR_TAB_LEN 512 //字符串数组最长值
 #define MAX_TAB_LEN 512 //符号表最长值
 #define MAX_OP_LEN 32 //操作数最长值
@@ -154,6 +154,7 @@ int label_ptr = 0;//当前label指针
 
 /********一些全局变量*******/
 int in_func = 0;//是否在函数内，0为否1为真
+int has_return;//是否有return语句
 extern int num;//词法分析中生成的数字
 extern char c;//词法分析中生成的字符
 int num_sign;//加入了符号后的数字

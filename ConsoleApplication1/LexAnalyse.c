@@ -4,6 +4,8 @@ char token[MAX_TOKEN_LEN];
 int tokenptr = 0;
 int num;//最后一个读入的数字
 char c;//最后一个读入的字符
+char string[MAX_TOKEN_LEN];//最后一个读入的字符串
+int stringptr = 0;//字符串指针
 char ch;
 int line = 0;
 char id[MAX_ID_LEN];
@@ -201,9 +203,14 @@ int getsym()
 	case QUOTESYM:
 		readch();
 		strflag = 1;
+		int i;
+		for (i = 0; i<MAX_TOKEN_LEN; i++)
+			string[i] = '\0';
+		stringptr = 0;
 		while (isWhich(ch) == STRC)
 		{
 			catToken(ch);
+			string[stringptr++] = ch;
 			readch();
 		}
 		strflag = 0;

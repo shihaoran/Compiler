@@ -6,6 +6,7 @@
 int sym;//全局符号
 extern int line;//当前行
 extern char id[MAX_ID_LEN];//最后读入的标识符
+extern char string[MAX_TOKEN_LEN];//最后读入的字符串
 /*======================END=========================*/
 
 /*=================四元式生成部分=====================*/
@@ -702,6 +703,7 @@ int parameter_table()
 int void_func_defination()
 {
 	int position;
+	has_return = 0;
 	if (sym != IDSYM)
 	{
 		error(MISSING_IDENTIFIER);
@@ -744,6 +746,11 @@ int void_func_defination()
 	{
 		return 0;
 	}
+	if (has_return)
+	{
+		error(NRETURN_FUNC_CANT_RETURN);
+		return 0;
+	}
 	if (sym != RBPARENSYM)
 	{
 		error(BRACE_DISMATCH);
@@ -758,12 +765,18 @@ int return_func_defination(int head_type)
 		return 0;
 	if (!return_func_defination_backend(head_type))
 		return 0;
+	if (!has_return)
+	{
+		error(RUTURN_FUNC_MUST_RETURN);
+		return 0;
+	}
 	return 1;
 }
 int return_func_defination_backend(int head_type)
 {
 	int position;
 	in_func = 1;
+	has_return = 0;
 	if (sym != LPARENSYM)
 	{
 		error(ERROR_PARAMETER);
@@ -804,6 +817,7 @@ int return_func_defination_backend(int head_type)
 }
 int main_func()//主函数,void main前面判断过了
 {
+	has_return = 0;
 	if (sym != LPARENSYM)
 	{
 		error(WRONG_HEAD);
@@ -824,6 +838,11 @@ int main_func()//主函数,void main前面判断过了
 	}	
 	sym = getsym();
 	compound_statement();
+	if (has_return)
+	{
+		error(NRETURN_FUNC_CANT_RETURN);
+		return 0;
+	}
 	if (sym != RBPARENSYM)
 	{
 		error(BRACE_DISMATCH);
@@ -860,8 +879,81 @@ int compound_statement()//复合语句
 	}
 	return 1;
 }
+int assign_statement(int i)
+{
+	int now_ptr;
+	int type;
+	int tmp_type_1, tmp_type_2;//为了判断赋值两侧类型是否相同
+	char op_1[MAX_OP_LEN] = { 0 };
+	char op_2[MAX_OP_LEN] = { 0 };
+	char op_r[MAX_OP_LEN] = { 0 };
+	if (sym_table[i].type != TYPE_VAR&&sym_table[i].type != TYPE_ARRAY&&sym_table[i].type != TYPE_PARA)
+	{
+		error(ASSIGN_ERROR);
+		return 0;
+	}
+	if (sym == LMPARENSYM)//赋值语句数组
+	{
+		if (sym_table[i].type != TYPE_ARRAY)
+		{
+			error(ASSIGN_ERROR);
+			return 0;
+		}
+		sym = getsym();
+		now_ptr = expression(&type);
+		if (now_ptr == -1 || type == 4)
+		{
+			return 0;
+		}
+		tmp_type_1 = gen_op(op_1, i, 3, now_ptr, type);
+		if (sym != RMPARENSYM)
+		{
+			error(PARENT_DISMATCH);
+			return 0;
+		}
+		sym = getsym();
+	}
+	else
+	{
+		if (sym_table[i].type != TYPE_VAR&&sym_table[i].type != TYPE_PARA)
+		{
+			error(ASSIGN_ERROR);
+			return 0;
+		}
+		tmp_type_1 = gen_op(op_1, i, type, 0, 0);
+	}
+	if (sym == ASSIGNSYM)//赋值语句
+	{
+		sym = getsym();
+		now_ptr = expression(&type);
+		if (now_ptr==-1||type==4)
+		{
+			return 0;
+		}
+		tmp_type_2 = gen_op(op_2, now_ptr, type, 0, 0);
+		if (tmp_type_1 != tmp_type_2);
+		{
+			error(ASSIGN_DISMATCH);
+			return 0;
+		}
+		emit(MOV, op_2, "", op_1);
+		if (sym != SEMICOLONSYM)
+		{
+			error(MISSING_SEMICOLON);
+			return 0;
+		}
+		printf("Line:%d --This is an assign_statement!\n", line + 1);
+	}
+	else
+	{
+		error(ASSIGN_ERROR);
+		return 0;
+	}
+}
 int statement()
 {
+	int i;
+	int type;
 	if (sym == IFSYM)
 	{
 		if (!if_statement())
@@ -901,17 +993,19 @@ int statement()
 	{
 		sym = getsym();
 		//TODO:有无返回值完全相同 这里不写函数
+		i = search_sym(id);
+		if (i < 0)
+		{
+			error(UNDEFINE_IDENTIFIER);
+			return 0;
+		}
 		//函数调用语句
 		if (sym == LPARENSYM)
 		{
 			sym = getsym();
-			if (!value_parameter_table())
+			type=call_func(i);
+			if (type==4)
 			{
-				return 0;
-			}
-			if (sym != RPARENSYM)
-			{
-				error(PARENT_DISMATCH);
 				return 0;
 			}
 			sym = getsym();
@@ -922,49 +1016,12 @@ int statement()
 			}
 			printf("Line:%d --This is a function_call_statement!\n", line+1);
 		}
-		else if (sym == ASSIGNSYM)//赋值语句1
+		else if (sym == ASSIGNSYM|| sym == LMPARENSYM)//赋值语句
 		{
-			sym = getsym();
-			if (!expression())
+			if(!assign_statement(i))
 			{
 				return 0;
 			}
-			if (sym != SEMICOLONSYM)
-			{
-				error(MISSING_SEMICOLON);
-				return 0;
-			}
-			printf("Line:%d --This is an assign_statement!\n", line+1);
-		}
-		else if (sym == LMPARENSYM)//赋值语句数组
-		{
-			sym = getsym();
-			if (!expression())
-			{
-				return 0;
-			}
-			if (sym != RMPARENSYM)
-			{
-				error(PARENT_DISMATCH);
-				return 0;
-			}
-			sym = getsym();
-			if (sym != ASSIGNSYM)
-			{
-				error(WRONG_ASSIGN_SYNTAX);
-				return 0;
-			}
-			sym = getsym();
-			if (!expression())
-			{
-				return 0;
-			}
-			if (sym != SEMICOLONSYM)
-			{
-				error(MISSING_SEMICOLON);
-				return 0;
-			}
-			printf("Line:%d --This is an assign_statement!\n", line+1);
 		}
 		else
 		{
@@ -1042,6 +1099,8 @@ int statement()
 }
 int if_statement()
 {
+	char label_str[MAX_OP_LEN];
+	int label_1, label_2;
 	if (sym != IFSYM)
 	{
 		error(ERROR_IN_IF);
@@ -1054,7 +1113,9 @@ int if_statement()
 		return 0;
 	}
 	sym = getsym();
-	if (!condition_statement())
+	sprintf(label_str, "LABEL_%d", label_ptr);
+	label_1 = label_ptr++;
+	if (!condition_statement(label_str))
 	{
 		return 0;
 	}
@@ -1070,16 +1131,28 @@ int if_statement()
 	}
 	if (sym == ELSESYM)
 	{
+		sprintf(label_str, "LABEL_%d", label_ptr);
+		label_2 = label_ptr++;
+		emit(JMP, "", "", label_str);
 		sym = getsym();
+		quat_table[quat_ptr].label = label_1;
 		if (!statement())
 		{
 			return 0;
 		}
+		quat_table[quat_ptr].label = label_2;
+	}
+	else
+	{
+		quat_table[quat_ptr].label = label_1;
 	}
 	return 1;
 }
 int while_statement()
 {
+	char label_str[MAX_OP_LEN];
+	int label_1, label_2;
+	int tmp_ptr;//保存while指令的四元式指针
 	if (sym != WHILESYM)
 	{
 		error(ERROR_IN_WHILE);
@@ -1092,10 +1165,13 @@ int while_statement()
 		return 0;
 	}
 	sym = getsym();
-	if (!condition_statement())
+	sprintf(label_str, "LABEL_%d", label_ptr);
+	label_1 = label_ptr++;
+	if (!condition_statement(label_str))
 	{
 		return 0;
 	}
+	tmp_ptr = quat_ptr - 1;
 	if (sym != RPARENSYM)
 	{
 		error(ERROR_IN_WHILE);
@@ -1106,28 +1182,58 @@ int while_statement()
 	{
 		return 0;
 	}
+	sprintf(label_str, "LABEL_%d", label_ptr);
+	label_2 = label_ptr++;
+	quat_table[tmp_ptr].label = label_2;
+	emit(JMP, "", "", label_str);
+	quat_table[quat_ptr].label = label_1;
 	return 1;
 }
-int condition_statement()
+int condition_statement(char *label)//在其中生成条件跳转语句，返回该语句的四元式地址
 {
-	if (!expression())
+	int i;
+	int type;
+	char op_1[MAX_OP_LEN] = { 0 };
+	char op_2[MAX_OP_LEN] = { 0 };
+	int temp_op;
+	i = expression(&type);
+	if (i == -1 || type == 4)
 	{
 		return 0;
 	}
+	gen_op(op_1, i, type, 0, 0);
 	if (sym == BIGTHSYM||sym == SMALLTHSYM||
 		sym == NOTBTHSYM||sym == NOTSTHSYM||
 		sym == EQLSYM||sym == NOTESYM)
 	{
+		temp_op = sym;
 		sym = getsym();
-		if (!expression())
+		i = expression(&type);
+		if (i == -1 || type == 4)
 		{
-			error(WRONG_EXPRESSION);
+			return 0;
 		}
+		gen_op(op_2, i, type, 0, 0);
+		switch (temp_op)
+		{
+		case BIGTHSYM:emit(JLE, op_1, op_2, label); break;
+		case SMALLTHSYM:emit(JGE, op_1, op_2, label); break;
+		case NOTBTHSYM:emit(JG, op_1, op_2, label); break;
+		case NOTSTHSYM:emit(JL, op_1, op_2, label); break;
+		case EQLSYM:emit(JNE, op_1, op_2, label); break;
+		case NOTESYM:emit(JE, op_1, op_2, label); break;
+		}
+	}
+	else
+	{
+		emit(JZ, op_1, "", label);
 	}
 	return 1;
 }
 int scanf_statement()
 {
+	int i;
+	char op_1[MAX_OP_LEN] = { 0 };
 	if (sym != SCANFSYM)
 	{
 		error(ERROR_IN_SCANF);
@@ -1145,6 +1251,19 @@ int scanf_statement()
 		error(ERROR_IN_SCANF);
 		return 0;
 	}
+	i = search_sym(id);
+	if (i < 0)
+	{
+		error(UNDEFINE_IDENTIFIER);
+		return 0;
+	}
+	if (sym_table[i].type != TYPE_VAR&&sym_table[i].type != TYPE_PARA)
+	{
+		error(IDENTIFIER_TYPE_DISMATCH);
+		return 0;
+	}
+	gen_op(op_1,i,0,0,0);
+	emit(READ, "", "", op_1);
 	sym = getsym();
 	while (sym == COMMASYM)
 	{
@@ -1154,6 +1273,19 @@ int scanf_statement()
 			error(ERROR_IN_SCANF);
 			return 0;
 		}
+		i = search_sym(id);
+		if (i < 0)
+		{
+			error(UNDEFINE_IDENTIFIER);
+			return 0;
+		}
+		if (sym_table[i].type != TYPE_VAR&&sym_table[i].type != TYPE_PARA)
+		{
+			error(IDENTIFIER_TYPE_DISMATCH);
+			return 0;
+		}
+		gen_op(op_1, i, 0, 0, 0);
+		emit(READ, "", "", op_1);
 		sym = getsym();
 	}
 	if(sym!=RPARENSYM)
@@ -1166,6 +1298,9 @@ int scanf_statement()
 }
 int printf_statement()
 {
+	int i, type;
+	char str[MAX_OP_LEN];
+	char op_1[MAX_OP_LEN ];
 	if (sym != PRINTFSYM)
 	{
 		error(ERROR_IN_PRINTF);
@@ -1180,17 +1315,26 @@ int printf_statement()
 	sym = getsym();
 	if (sym == STRSYM)
 	{
+		strcpy(str_table[str_ptr], string);
+		sprintf(str, "__str%d", str_ptr);
+		str_ptr++;
 		sym = getsym();
 		if (sym == COMMASYM)//字符串 表达式
 		{
 			sym = getsym();
-			if (!expression())
+			i = expression(&type);
+			if (i == -1 || type == 4)
 			{
 				error(ERROR_IN_PRINTF);//想想是不是要保留
 				return 0;
 			}
+			gen_op(op_1, type, i, 0, 0);
+			emit(WRITE, str, op_1, "");
 		}
-		else if (sym == RPARENSYM) {}//仅字符串
+		else if (sym == RPARENSYM) //仅字符串
+		{
+			emit(WRITE, str, "", "");
+		}
 		else
 		{
 			error(ERROR_IN_PRINTF);
@@ -1199,11 +1343,14 @@ int printf_statement()
 	}
 	else//仅表达式
 	{
-		if (!expression())
+		i = expression(&type);
+		if (i == -1 || type == 4)
 		{
 			error(ERROR_IN_PRINTF);//想想是不是要保留
 			return 0;
 		}
+		gen_op(op_1, type, i, 0, 0);
+		emit(WRITE, "", op_1, "");
 	}
 	if (sym != RPARENSYM)
 	{
@@ -1215,6 +1362,11 @@ int printf_statement()
 }
 int switch_statement()
 {
+	int i, type;
+	int tmp_label;//保存在所有语句后要跳转到的label号
+	int return_label;//保存case语句最后要跳转到的label号
+	char label[MAX_OP_LEN];
+	char op_1[MAX_OP_LEN];
 	if (sym != SWITCHSYM)
 	{
 		error(ERROR_IN_SWITCH);
@@ -1227,10 +1379,12 @@ int switch_statement()
 		return 0;
 	}
 	sym = getsym();
-	if (!expression())
+	i = expression(&type);
+	if (i == -1 || type == 4)
 	{
 		return 0;
 	}
+	gen_op(op_1, i, type, 0, 0);
 	if (sym != RPARENSYM)
 	{
 		error(PARENT_DISMATCH);
@@ -1243,17 +1397,26 @@ int switch_statement()
 		return 0;
 	}
 	sym = getsym();
-	if (!switch_table())
+	tmp_label = label_ptr;
+	label_ptr++;
+	return_label = switch_table(tmp_label, op_1);
+	if (!return_label)
 	{
 		return 0;
 	}
 	if (sym == DEFAULTSYM)//有缺省
 	{
-		if (!default_statement())
+		if (!default_statement(return_label))
 		{
 			return 0;
 		}
 	}
+	else
+	{
+		emit(NOP, "", "", "");//加NOP为了防止和下一个跳转地址重复
+		quat_table[quat_ptr - 1].label = return_label;
+	}
+	quat_table[quat_ptr].label = tmp_label;
 	if (sym != RBPARENSYM)
 	{
 		error(ERROR_IN_SWITCH);
@@ -1262,8 +1425,13 @@ int switch_statement()
 	sym = getsym();
 	return 1;
 }
-int switch_table()
+//返回值是最后的case跳转的label号
+int switch_table(int i,char *op_1)//i表示成功后无条件跳转到的label号,op_1是要比较的op
 {
+	int tmp;//保存当前的判断值
+	int f_label;//保存上一个label号
+	char op_2[MAX_OP_LEN];
+	char label[MAX_OP_LEN];
 	if (sym != CASESYM)
 	{
 		error(ERROR_IN_SWITCHTABLE);
@@ -1273,13 +1441,22 @@ int switch_table()
 	if (sym == CHSYM)
 	{
 		sym = getsym();
+		tmp = c;
 	}
-	else if (integer()) {}
+	else if (integer()) 
+	{
+		tmp = num_sign;
+	}
 	else
 	{
 		error(ERROR_IN_SWITCHTABLE);
 		return 0;
 	}
+	sprintf(op_2, "%d", tmp);//将立即数生成op
+	sprintf(label, "LABEL_%d", label_ptr);//生成当前label对应的op
+	emit(JNE, op_1,op_2 , label);
+	f_label = label_ptr;//保存label号，以便下个case调用
+	label_ptr++;
 	if (sym != COLONSYM)
 	{
 		error(ERROR_IN_SWITCHTABLE);
@@ -1290,19 +1467,31 @@ int switch_table()
 	{
 		return 0;
 	}
+	sprintf(label, "LABEL_%d", i);
+	emit(JMP, "", "", label);
 	while (sym == CASESYM)
 	{
 		sym = getsym();//下面判断一个常量
 		if (sym == CHSYM)
 		{
 			sym = getsym();
+			tmp = c;
 		}
-		else if (integer()) {}
+		else if (integer())
+		{
+			tmp = num_sign;
+		}
 		else
 		{
 			error(ERROR_IN_SWITCHTABLE);
 			return 0;
 		}
+		sprintf(op_2, "%d", tmp);
+		sprintf(label, "LABEL_%d", label_ptr);//生成当前label对应的op
+		emit(JNE, op_1, op_2, label);
+		quat_table[quat_ptr-1].label = f_label;//设置上一个case指向当前label
+		f_label = label_ptr;//保存label号，以便下个case调用
+		label_ptr++;
 		if (sym != COLONSYM)
 		{
 			error(ERROR_IN_SWITCHTABLE);
@@ -1313,10 +1502,12 @@ int switch_table()
 		{
 			return 0;
 		}
+		sprintf(label, "LABEL_%d", i);
+		emit(JMP, "", "", label);
 	}
-	return 1;
+	return f_label;
 }
-int default_statement()
+int default_statement(int i)//输入的是第一条指令的label号
 {
 	if (sym != DEFAULTSYM)
 	{
@@ -1330,6 +1521,8 @@ int default_statement()
 		return 0;
 	}
 	sym = getsym();
+	emit(NOP, "", "", "");//加NOP为了防止和下一个跳转地址重复
+	quat_table[quat_ptr - 1].label = i;
 	if (!statement())
 	{
 		return 0;
@@ -1338,6 +1531,8 @@ int default_statement()
 }
 int return_statement()
 {
+	int i, type;
+	int op_1[MAX_OP_LEN];
 	if (sym != RETURNSYM)
 	{
 		error(ERROR_IN_RETURN);
@@ -1347,17 +1542,25 @@ int return_statement()
 	if (sym == LPARENSYM)
 	{
 		sym = getsym();
-		if (!expression())
+		i = expression(&type);
+		if (i==-1||type==4)
 		{
 			return 0;
 		}
+		gen_op(op_1,i,type,0,0);
+		emit(RET, op_1, "", "");
 		if (sym != RPARENSYM)
 		{
 			error(PARENT_DISMATCH);
 			return 0;
 		}
 		sym = getsym();
+		has_return = 1;
 	}//TODO:统一结束处理
+	else
+	{
+		emit(RET, "", "", "");
+	}
 	return 1;
 }
 int expression(int *type)//表达式,传入的指针表示返回的数的类型，0为符号表指针，1为int立即数,2为char立即数,3为数组（在下层，此处不会返回3），4为报错此时返回-1
@@ -1497,7 +1700,7 @@ int factor(int *type, int *array_i, int *array_i_type)//因子
 		i = search_sym(id);
 		if (i < 0)
 		{
-			error(NONE_DEFINE_IDENTIFIER);
+			error(UNDEFINE_IDENTIFIER);
 			*type = 4;
 			return -1;
 		}
