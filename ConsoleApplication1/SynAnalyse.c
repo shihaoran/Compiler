@@ -25,6 +25,12 @@ int search_sym(char *name)//Ñ°ÕÒµ±Ç°±êÊ¶·ûÔÚ·ûºÅ±íÖĞµÄÎ»ÖÃ
 
 void emit(int op, char* op1, char* op2, char* opr)//Éú³ÉËÄÔªÊ½£¬¼ÓÈëËÄÔªÊ½Êı×éÖĞ,¾Ö²¿³£Á¿²»¼Ó±êÊ¶·ûÓÃÒÔÇø·ÖÈ«¾Ö¾Ö²¿
 {
+	int i;
+	if (quat_ptr == 0)
+	{
+		for(i=0;i<MAX_QUAT_LEN;i++)
+			quat_table[i].label = -1;
+	}
 	quat_table[quat_ptr].op = op;
 	strcpy(quat_table[quat_ptr].op1, op1);
 	strcpy(quat_table[quat_ptr].op2, op2);
@@ -60,8 +66,9 @@ void add_sym(char *name, int type, int value_type, int int_v, char char_v, char*
 }
 int add_tmp(char *name, int type)
 {
-	sprintf(name, "$%d", sym_ptr-tmp_ptr);
+	sprintf(name, "$%d", tmp_cnt);
 	add_sym(name, TYPE_TMP, type, 0, 0, NULL);
+	tmp_cnt++;
 	return sym_ptr - 1;
 }
 int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªintÁ¢¼´Êı, 2ÎªcharÁ¢¼´Êı, 3ÎªÊı×é£¨ÔÚÏÂ²ã£¬´Ë´¦²»»á·µ»Ø3£©
@@ -90,7 +97,7 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 		}
 		else //Èç¹ûÊÇÁÙÊ±±äÁ¿
 		{
-			sprintf(name, "$%d", i - tmp_ptr);
+			sprintf(name, "%s", sym_table[i].name);
 		}
 		return sym_table[i].value_type;
 	}
@@ -111,7 +118,7 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 		}
 		if (array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªÕûÊı
 		{
-			sprintf(tmp, "[%d]", i);
+			sprintf(tmp, "[%d]", array_i);
 			strcat(name, tmp);
 		}
 		else//Èç¹ûÊÇ·ûºÅ±íÖ¸Õë£¬Éú³ÉÏàÓ¦µÄ±äÁ¿ºÅ
@@ -579,7 +586,7 @@ int value_parameter_table(int i)
 			return 0;
 		}
 		j = expression(&type);
-		if (type == 4 || j == -1)
+		if (type == 4 && j == -1)
 		{
 			error(ERROR_PARAMETER);
 			return 0;
@@ -605,7 +612,7 @@ int value_parameter_table(int i)
 				return 0;
 			}
 			j = expression(&type);
-			if (type == 4 || j == -1)
+			if (type == 4 && j == -1)
 			{
 				error(ERROR_PARAMETER);
 				return 0;
@@ -666,6 +673,10 @@ int parameter_table()
 				error(ERROR_PARAMETER);
 				return 0;
 			}
+			if (sym == INTSYM)
+				para_type = 1;
+			else
+				para_type = 2;
 			sym = getsym();
 			if (sym != IDSYM)
 			{
@@ -686,13 +697,11 @@ int parameter_table()
 			error(ERROR_PARAMETER);
 			return 0;
 		}
-		local_ptr = sym_ptr;
 		return 1;
 	}
 	else if(sym == RPARENSYM)//Îª¿Õ
 	{
 		return 1;
-		local_ptr = sym_ptr;
 	}
 	else
 	{
@@ -703,7 +712,10 @@ int parameter_table()
 int void_func_defination()
 {
 	int position;
+	int i;
+	int func_id_i;
 	has_return = 0;
+	in_func = 1;
 	if (sym != IDSYM)
 	{
 		error(MISSING_IDENTIFIER);
@@ -716,6 +728,7 @@ int void_func_defination()
 		return 0;
 	}
 	add_sym(id, TYPE_FUNC, TYPE_VALUE_INIT, 0, 0, NULL);
+	func_id_i = sym_ptr - 1;
 	emit(FUNC, id, "", "");
 	para_ptr = sym_ptr;
 	sym = getsym();
@@ -757,6 +770,11 @@ int void_func_defination()
 		return 0;
 	}
 	sym = getsym();
+	in_func = 0;
+	emit(FUNC, sym_table[func_id_i].name, "", "");
+	for (i = para_ptr; i < sym_ptr; i++)//Çå¿Õµ½²ÎÊıµÄÃû×Ö£¬µ«ÊÇÈÔÈ»Òª±£Áô²ÎÊı£¬ÓÃ×÷²ÎÊı¸öÊıÅĞ¶Ï
+		sym_table[i].name[0] = '\0';
+	sym_ptr = local_ptr;
 	return 1;
 }
 int return_func_defination(int head_type)
@@ -775,6 +793,8 @@ int return_func_defination(int head_type)
 int return_func_defination_backend(int head_type)
 {
 	int position;
+	int func_id_i;//±£´æµ±Ç°º¯ÊıÃûµÄ·ûºÅ±íµØÖ·
+	int i;
 	in_func = 1;
 	has_return = 0;
 	if (sym != LPARENSYM)
@@ -789,6 +809,7 @@ int return_func_defination_backend(int head_type)
 		return 0;
 	}
 	add_sym(id, TYPE_FUNC, head_type, 0, 0, NULL);
+	func_id_i = sym_ptr - 1;
 	emit(FUNC, id, "", "");
 	para_ptr = sym_ptr;
 	sym = getsym();
@@ -813,11 +834,18 @@ int return_func_defination_backend(int head_type)
 		return 0;
 	}
 	sym = getsym();
+	in_func = 0;
+	emit(FUNC, sym_table[func_id_i].name, "", "");
+	for (i = para_ptr; i < sym_ptr; i++)//Çå¿Õµ½²ÎÊıµÄÃû×Ö£¬µ«ÊÇÈÔÈ»Òª±£Áô²ÎÊı£¬ÓÃ×÷²ÎÊı¸öÊıÅĞ¶Ï
+		sym_table[i].name[0] = '\0';
+	sym_ptr = local_ptr;
 	return 1;
 }
 int main_func()//Ö÷º¯Êı,void mainÇ°ÃæÅĞ¶Ï¹ıÁË
 {
 	has_return = 0;
+	in_func = 1;
+	emit(MAINFUNC, "", "", "");
 	if (sym != LPARENSYM)
 	{
 		error(WRONG_HEAD);
@@ -849,10 +877,13 @@ int main_func()//Ö÷º¯Êı,void mainÇ°ÃæÅĞ¶Ï¹ıÁË
 		return 0;
 	}
 	sym = getsym();
+	in_func = 0;
+	emit(EOMAINFUNC, "", "", "");
 	return 1;
 }
 int compound_statement()//¸´ºÏÓï¾ä
 {
+	local_ptr = sym_ptr;
 	if (sym == CONSTSYM)
 	{
 		const_declaration();
@@ -861,6 +892,7 @@ int compound_statement()//¸´ºÏÓï¾ä
 	{
 		var_declaration();
 	}
+	tmp_ptr = sym_ptr;
 	if (sym == RBPARENSYM)
 	{
 		return 1;
@@ -901,7 +933,7 @@ int assign_statement(int i)
 		}
 		sym = getsym();
 		now_ptr = expression(&type);
-		if (now_ptr == -1 || type == 4)
+		if (now_ptr == -1 && type == 4)
 		{
 			return 0;
 		}
@@ -920,18 +952,19 @@ int assign_statement(int i)
 			error(ASSIGN_ERROR);
 			return 0;
 		}
+		type = 0;
 		tmp_type_1 = gen_op(op_1, i, type, 0, 0);
 	}
 	if (sym == ASSIGNSYM)//¸³ÖµÓï¾ä
 	{
 		sym = getsym();
-		now_ptr = expression(&type);
-		if (now_ptr==-1||type==4)
+		now_ptr = expression(&type);//ÕâÀï¿ÉÄÜ·µ»Ø¸ºÖµ
+		if (now_ptr==-1&&type==4)
 		{
 			return 0;
 		}
 		tmp_type_2 = gen_op(op_2, now_ptr, type, 0, 0);
-		if (tmp_type_1 != tmp_type_2);
+		if (tmp_type_1 != tmp_type_2)
 		{
 			error(ASSIGN_DISMATCH);
 			return 0;
@@ -1008,7 +1041,6 @@ int statement()
 			{
 				return 0;
 			}
-			sym = getsym();
 			if (sym != SEMICOLONSYM)
 			{
 				error(MISSING_SEMICOLON);
@@ -1152,7 +1184,7 @@ int while_statement()
 {
 	char label_str[MAX_OP_LEN];
 	int label_1, label_2;
-	int tmp_ptr;//±£´æwhileÖ¸ÁîµÄËÄÔªÊ½Ö¸Õë
+	int quat_tmp_ptr;//±£´æwhileÖ¸ÁîµÄËÄÔªÊ½Ö¸Õë
 	if (sym != WHILESYM)
 	{
 		error(ERROR_IN_WHILE);
@@ -1171,7 +1203,7 @@ int while_statement()
 	{
 		return 0;
 	}
-	tmp_ptr = quat_ptr - 1;
+	quat_tmp_ptr = quat_ptr - 1;
 	if (sym != RPARENSYM)
 	{
 		error(ERROR_IN_WHILE);
@@ -1184,7 +1216,7 @@ int while_statement()
 	}
 	sprintf(label_str, "LABEL_%d", label_ptr);
 	label_2 = label_ptr++;
-	quat_table[tmp_ptr].label = label_2;
+	quat_table[quat_tmp_ptr].label = label_2;
 	emit(JMP, "", "", label_str);
 	quat_table[quat_ptr].label = label_1;
 	return 1;
@@ -1197,7 +1229,7 @@ int condition_statement(char *label)//ÔÚÆäÖĞÉú³ÉÌõ¼şÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 	char op_2[MAX_OP_LEN] = { 0 };
 	int temp_op;
 	i = expression(&type);
-	if (i == -1 || type == 4)
+	if (i == -1 && type == 4)
 	{
 		return 0;
 	}
@@ -1209,7 +1241,7 @@ int condition_statement(char *label)//ÔÚÆäÖĞÉú³ÉÌõ¼şÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 		temp_op = sym;
 		sym = getsym();
 		i = expression(&type);
-		if (i == -1 || type == 4)
+		if (i == -1 && type == 4)
 		{
 			return 0;
 		}
@@ -1323,7 +1355,7 @@ int printf_statement()
 		{
 			sym = getsym();
 			i = expression(&type);
-			if (i == -1 || type == 4)
+			if (i == -1 && type == 4)
 			{
 				error(ERROR_IN_PRINTF);//ÏëÏëÊÇ²»ÊÇÒª±£Áô
 				return 0;
@@ -1344,7 +1376,7 @@ int printf_statement()
 	else//½ö±í´ïÊ½
 	{
 		i = expression(&type);
-		if (i == -1 || type == 4)
+		if (i == -1 && type == 4)
 		{
 			error(ERROR_IN_PRINTF);//ÏëÏëÊÇ²»ÊÇÒª±£Áô
 			return 0;
@@ -1380,7 +1412,7 @@ int switch_statement()
 	}
 	sym = getsym();
 	i = expression(&type);
-	if (i == -1 || type == 4)
+	if (i == -1 && type == 4)
 	{
 		return 0;
 	}
@@ -1543,7 +1575,7 @@ int return_statement()
 	{
 		sym = getsym();
 		i = expression(&type);
-		if (i==-1||type==4)
+		if (i==-1&&type==4)
 		{
 			return 0;
 		}
@@ -1568,9 +1600,10 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 	char op_1[MAX_OP_LEN] = { 0 };
 	char op_2[MAX_OP_LEN] = { 0 };
 	char op_r[MAX_OP_LEN] = { 0 };
-	int i,array_i,array_i_type;
+	int i;
+	int array_i=0,array_i_type=0;
 	int tmp_type1,tmp_type2;
-	int first;//±£´æ×î¿ªÊ¼µÄ·ûºÅ
+	int first=0;//±£´æ×î¿ªÊ¼µÄ·ûºÅ
 	int flag=0;//ÊÇ·ñÖ»ÓĞÒ»Ïî
 	int op;//¶àÏîÊ±µ±Ç°ÊÇÕı¸ººÅ
 	if (sym == PLUSSYM || sym == MINUSSYM)//ÎªÁËÄÜ¹»Ö±½Ó 
@@ -1579,7 +1612,7 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 		sym = getsym();
 	}
 	i=item(type,&array_i,&array_i_type);
-	if (*type == 4||i==-1)
+	if (*type == 4&&i==-1)
 	{
 		*type = 4;
 		return -1;
@@ -1634,9 +1667,9 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 		emit(op, op_1, op_2, op_r);
 		*type = 0;
 	}
-	if (!flag)//Èç¹ûÖ»ÓĞÒ»Ïî
+	if ((!flag)&&first)//Èç¹ûÖ»ÓĞÒ»Ïî
 	{
-		if ((*type == 1 || *type == 2)&&first)//Èç¹ûÊÇÁ¢¼´Êı,Ö±½Ó·µ»Ø¸ºÖµ
+		if (*type == 1 || *type == 2)//Èç¹ûÊÇÁ¢¼´Êı,Ö±½Ó·µ»Ø¸ºÖµ
 		{
 			i = -i;
 		}
@@ -1658,7 +1691,7 @@ int item(int *type,int *array_i,int *array_i_type)//Ïî
 	int i;
 	int op;//µ±Ç°ÊÇ³Ë³ıºÅ
 	i = factor(type, array_i, array_i_type);
-	if (*type == 4 || i == -1)
+	if (*type == 4 && i == -1)
 	{
 		*type = 4;
 		return -1;
@@ -1669,7 +1702,7 @@ int item(int *type,int *array_i,int *array_i_type)//Ïî
 		op = (sym == TIMESSYM) ? MUL : DIV;
 		sym = getsym();
 		i = factor(type, array_i, array_i_type);
-		if (*type == 4 || i == -1)
+		if (*type == 4 && i == -1)
 		{
 			*type = 4;
 			return -1;
@@ -1715,14 +1748,14 @@ int factor(int *type, int *array_i, int *array_i_type)//Òò×Ó
 			}
 			sym = getsym();
 			*array_i = expression(type);
-			if (*type == 4 || *array_i == -1)
+			if (*type == 4 && *array_i == -1)
 			{
 				*type = 4;
 				return -1;
 			}
 			*array_i_type = *type;
 			*type = 3;
-			gen_op(op_1, i, *type, array_i, array_i_type);
+			gen_op(op_1, i, *type, *array_i, *array_i_type);
 			i = add_tmp(op_r, sym_table[i].value_type);
 			emit(MOV, op_1, "", op_r);
 			*type = 0;
@@ -1776,7 +1809,7 @@ int factor(int *type, int *array_i, int *array_i_type)//Òò×Ó
 	{
 		sym = getsym();
 		i = expression(type);
-		if (*type==4||i==-1)
+		if (*type==4&&i==-1)
 		{
 			*type = 4;
 			return -1;
@@ -1991,7 +2024,9 @@ void print_quat()
 	int i;
 	for (i = 0; i < quat_ptr; i++)
 	{
-		printf("%s   %s   %s   %s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
+		if (quat_table[i].label !=-1)
+			printf("LABEL_%d\n", quat_table[i].label);
+		printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 	}
 }
 

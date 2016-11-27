@@ -147,6 +147,7 @@ int sym_ptr = 0;//当前符号表尽头指针
 int para_ptr = 0;//函数调用参数起始位置
 int local_ptr = 0;//函数调用局部变量起始位置
 int tmp_ptr = 0;//函数调用临时变量起始位置
+int tmp_cnt = 0;//临时变量计数，全局使用为了优化方便
 int quat_ptr = 0;//四元式指针
 int str_ptr = 0;//字符串常量指针
 int label_ptr = 0;//当前label指针

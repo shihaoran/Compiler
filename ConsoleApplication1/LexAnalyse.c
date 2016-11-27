@@ -94,8 +94,8 @@ int isWhich(char c)
 		if (c == '\"')			return QUOTESYM;
 		if (c == '(')			return LPARENSYM;
 		if (c == ')')			return RPARENSYM;
-		if (c == '<')			return BIGTHSYM;
-		if (c == '>')			return SMALLTHSYM;
+		if (c == '>')			return BIGTHSYM;
+		if (c == '<')			return SMALLTHSYM;
 		if (c == '{')			return LBPARENSYM;
 		if (c == '}')			return RBPARENSYM;
 		if (c == '[')			return LMPARENSYM;
@@ -355,9 +355,9 @@ int init()
 	int result = 0;
 	int i = 1;
 	printf("Path:");
-	scanf("%s", path);
-	src = fopen(path, "r");
-	//src = fopen("C:\\test.c", "r");
+	//scanf("%s", path);
+	//src = fopen(path, "r");
+	src = fopen("C:\\test4.txt", "r");
 	/*
 	result = getsym();
 	while (result != EOF)
