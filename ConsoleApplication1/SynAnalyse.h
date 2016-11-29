@@ -31,6 +31,10 @@ int expression();
 int item();
 int factor();
 int program();
+void print_quat();
+void gen_mips();
+void gen_data();
+void gen_text();
 
 #define MAX_ID_LEN 128 //标识符最长值
 #define MAX_STR_LEN 128 //字符串最长值
@@ -140,7 +144,7 @@ struct quat_record
 } quat_table[MAX_QUAT_LEN];
 
 /********定义字符串常量数组*******/
-const str_table[MAX_STR_TAB_LEN][MAX_STR_LEN];
+char str_table[MAX_STR_TAB_LEN][MAX_STR_LEN];
 
 /********定义各种指针*******/
 int sym_ptr = 0;//当前符号表尽头指针

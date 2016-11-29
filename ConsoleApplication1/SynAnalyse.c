@@ -8,7 +8,10 @@ extern int line;//µ±Ç°ÐÐ
 extern char id[MAX_ID_LEN];//×îºó¶ÁÈëµÄ±êÊ¶·û
 extern char string[MAX_TOKEN_LEN];//×îºó¶ÁÈëµÄ×Ö·û´®
 /*======================END=========================*/
-
+FILE *mips;
+int gen_mips_ptr=0;
+int local_table[MAX_TAB_LEN];
+int local_offset = 0;//µ±Ç°Ïà¶Ô×ø±êÆ«ÒÆÁ¿
 /*=================ËÄÔªÊ½Éú³É²¿·Ö=====================*/
 int search_sym(char *name)//Ñ°ÕÒµ±Ç°±êÊ¶·ûÔÚ·ûºÅ±íÖÐµÄÎ»ÖÃ
 {
@@ -57,11 +60,30 @@ void add_sym(char *name, int type, int value_type, int int_v, char char_v, char*
 			sym_table[sym_ptr].str_value, str_v;
 			break;
 		}
+		if (in_func)
+		{
+			local_table[sym_ptr - local_ptr] = local_offset;
+			local_offset++;
+		}
 	}
 	else if (type == TYPE_ARRAY)
+	{
 		sym_table[sym_ptr].int_value = int_v;
+		if (in_func)
+		{
+			local_table[sym_ptr - local_ptr] = local_offset;
+			local_offset+=int_v;
+		}
+	}
 	else
+	{
 		sym_table[sym_ptr].int_value = 0;
+		if (in_func&&type==TYPE_VAR)
+		{
+			local_table[sym_ptr - local_ptr] = local_offset;
+			local_offset++;
+		}
+	}
 	sym_ptr++;
 }
 int add_tmp(char *name, int type)
@@ -93,7 +115,7 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 		}
 		else if (i < tmp_ptr)//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
-			sprintf(name, "%%%d", i - local_ptr);
+			sprintf(name, "%%%d", local_table[i - local_ptr]);
 		}
 		else //Èç¹ûÊÇÁÙÊ±±äÁ¿
 		{
@@ -595,7 +617,7 @@ int value_parameter_table(int i)
 			((type == 1 || type == 2) && type == sym_table[now_ptr].value_type))
 		{
 			gen_op(op_1, j, type, 0, 0);
-			strcpy(para_stack[stack_ptr], op_1);
+			strcpy(para_stack[stack_ptr++], op_1);
 		}
 		else
 		{
@@ -771,9 +793,12 @@ int void_func_defination()
 	}
 	sym = getsym();
 	in_func = 0;
-	emit(FUNC, sym_table[func_id_i].name, "", "");
+	emit(EOFUNC, sym_table[func_id_i].name, "", "");
 	for (i = para_ptr; i < sym_ptr; i++)//Çå¿Õµ½²ÎÊýµÄÃû×Ö£¬µ«ÊÇÈÔÈ»Òª±£Áô²ÎÊý£¬ÓÃ×÷²ÎÊý¸öÊýÅÐ¶Ï
 		sym_table[i].name[0] = '\0';
+	for (i = 0; i < local_offset; i++)//ÆäÊµÕâÀï²»Ó¦¸Ãµ½offset£¬µ«ÊÇÕÒ²»µ½¾Ö²¿±äÁ¿¸öÊýÁË£¬Ö»ÄÜÕÒµ½¸ü´óµÄÖµ
+		local_table[i] = 0;
+	local_offset = 0;
 	sym_ptr = local_ptr;
 	return 1;
 }
@@ -835,9 +860,12 @@ int return_func_defination_backend(int head_type)
 	}
 	sym = getsym();
 	in_func = 0;
-	emit(FUNC, sym_table[func_id_i].name, "", "");
+	emit(EOFUNC, sym_table[func_id_i].name, "", "");
 	for (i = para_ptr; i < sym_ptr; i++)//Çå¿Õµ½²ÎÊýµÄÃû×Ö£¬µ«ÊÇÈÔÈ»Òª±£Áô²ÎÊý£¬ÓÃ×÷²ÎÊý¸öÊýÅÐ¶Ï
 		sym_table[i].name[0] = '\0';
+	for (i = 0; i < local_offset; i++)//ÆäÊµÕâÀï²»Ó¦¸Ãµ½offset£¬µ«ÊÇÕÒ²»µ½¾Ö²¿±äÁ¿¸öÊýÁË£¬Ö»ÄÜÕÒµ½¸ü´óµÄÖµ
+		local_table[i] = 0;
+	local_offset = 0;
 	sym_ptr = local_ptr;
 	return 1;
 }
@@ -1360,7 +1388,7 @@ int printf_statement()
 				error(ERROR_IN_PRINTF);//ÏëÏëÊÇ²»ÊÇÒª±£Áô
 				return 0;
 			}
-			gen_op(op_1, type, i, 0, 0);
+			gen_op(op_1, i, type, 0, 0);
 			emit(WRITE, str, op_1, "");
 		}
 		else if (sym == RPARENSYM) //½ö×Ö·û´®
@@ -1381,7 +1409,7 @@ int printf_statement()
 			error(ERROR_IN_PRINTF);//ÏëÏëÊÇ²»ÊÇÒª±£Áô
 			return 0;
 		}
-		gen_op(op_1, type, i, 0, 0);
+		gen_op(op_1, i, type, 0, 0);
 		emit(WRITE, "", op_1, "");
 	}
 	if (sym != RPARENSYM)
@@ -1777,7 +1805,7 @@ int factor(int *type, int *array_i, int *array_i_type)//Òò×Ó
 				return -1;
 			}
 			i = add_tmp(op_r, i);
-			emit(MOV, "!eax", "", op_r);
+			emit(MOV, "!RETURN_V", "", op_r);
 		}
 		else//ÆÕÍ¨±äÁ¿³£Á¿²ÎÊý
 		{
@@ -2026,16 +2054,59 @@ void print_quat()
 	{
 		if (quat_table[i].label !=-1)
 			printf("LABEL_%d\n", quat_table[i].label);
+		/*if (quat_table[i].op == WRITE)
+		{
+			printf("op1    %s\n", quat_table[i].op1);
+			printf("op2    %s\n", quat_table[i].op2);
+			printf("opr    %s\n", quat_table[i].opr);
+			printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
+		}*/
 		printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 	}
 }
 
-
+void gen_mips()
+{
+	mips=fopen("mips.asm", "w");
+	gen_data();
+	gen_text();
+	fclose(mips);
+}
+void gen_data()
+{
+	int i;
+	char tmp[MAX_OP_LEN];
+	fprintf(mips, ".data\n");
+	while (quat_table[gen_mips_ptr].op == CONST)
+	{
+		fprintf(mips, "%-10s:  .word\t%s\n", quat_table[gen_mips_ptr].op2, quat_table[gen_mips_ptr].opr);
+		gen_mips_ptr++;
+	}
+	while (quat_table[gen_mips_ptr].op == VAR)
+	{
+		if(strcmp(quat_table[gen_mips_ptr].opr,""))
+			fprintf(mips, "%-10s:  .space\t%d\n", quat_table[gen_mips_ptr].op2, atoi(quat_table[gen_mips_ptr].opr)*4);
+		else
+			fprintf(mips, "%-10s:  .space\t4\n", quat_table[gen_mips_ptr].op2);
+		gen_mips_ptr++;
+	}
+	for (i = 0; i < str_ptr; i++)
+	{
+		sprintf(tmp, "__str%d", i);
+		fprintf(mips, "%-10s:  .asciiz\t\"%s\"\n", tmp, str_table[i]);
+	}
+}
+void gen_text()
+{
+	fprintf(mips, ".text\n");
+	fprintf(mips, "j\tmain\n");
+}
 int main()
 {
 	int result,i=0;
 	init();
 	program();
 	print_quat();
+	gen_mips();
 	scanf("%d", &result);
 }
