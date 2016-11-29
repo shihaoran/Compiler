@@ -5,10 +5,14 @@ char op;
 void fun(int num,char useless2)
 {
 	int f;
+	int k[20];
+	int b;
 	if(num>=26)
 	{
 		return;
 	}
+	b=b+4;
+	k[b]=b;
 	switch(op)
 	{
 		case '+':f=big;
@@ -22,7 +26,7 @@ void fun(int num,char useless2)
 	}
 	return;
 }
-void inputchar()
+int inputchar()
 {
 	char a;
 	printf("please input op");
@@ -39,11 +43,14 @@ void inputchar()
 			default:op='*';
 		}
 	}
+	return (1);
 }
 int input()
 {
 	const int useless3=1;
 	int questiontimes,num;
+	char ddd[100];
+	int a;
 	num=0;
 	printf("please input questiontimes");
 	scanf(questiontimes);
@@ -52,7 +59,7 @@ int input()
 	printf(questiontimes);
 	while(questiontimes>0)
 	{
-		op=inputchar();
+		inputchar();
 		if(op!='*')
 		{
 			return (num);
@@ -63,8 +70,10 @@ int input()
 }
 void main()
 {
-	const char useless2='u';
+	const char useless2='u';	
+	char ddd[100];
+	int a;
 	a=input();
-	fun(a,useless2);
+	fun(a,ddd[55]);
 	return;
 }
