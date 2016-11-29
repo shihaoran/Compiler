@@ -8,7 +8,8 @@ extern int line;//当前行
 extern char id[MAX_ID_LEN];//最后读入的标识符
 extern char string[MAX_TOKEN_LEN];//最后读入的字符串
 /*======================END=========================*/
-
+FILE *mips;
+int gen_mips_ptr=0;
 /*=================四元式生成部分=====================*/
 int search_sym(char *name)//寻找当前标识符在符号表中的位置
 {
@@ -771,7 +772,7 @@ int void_func_defination()
 	}
 	sym = getsym();
 	in_func = 0;
-	emit(FUNC, sym_table[func_id_i].name, "", "");
+	emit(EOFUNC, sym_table[func_id_i].name, "", "");
 	for (i = para_ptr; i < sym_ptr; i++)//清空到参数的名字，但是仍然要保留参数，用作参数个数判断
 		sym_table[i].name[0] = '\0';
 	sym_ptr = local_ptr;
@@ -835,7 +836,7 @@ int return_func_defination_backend(int head_type)
 	}
 	sym = getsym();
 	in_func = 0;
-	emit(FUNC, sym_table[func_id_i].name, "", "");
+	emit(EOFUNC, sym_table[func_id_i].name, "", "");
 	for (i = para_ptr; i < sym_ptr; i++)//清空到参数的名字，但是仍然要保留参数，用作参数个数判断
 		sym_table[i].name[0] = '\0';
 	sym_ptr = local_ptr;
@@ -1360,7 +1361,7 @@ int printf_statement()
 				error(ERROR_IN_PRINTF);//想想是不是要保留
 				return 0;
 			}
-			gen_op(op_1, type, i, 0, 0);
+			gen_op(op_1, i, type, 0, 0);
 			emit(WRITE, str, op_1, "");
 		}
 		else if (sym == RPARENSYM) //仅字符串
@@ -1381,7 +1382,7 @@ int printf_statement()
 			error(ERROR_IN_PRINTF);//想想是不是要保留
 			return 0;
 		}
-		gen_op(op_1, type, i, 0, 0);
+		gen_op(op_1, i, type, 0, 0);
 		emit(WRITE, "", op_1, "");
 	}
 	if (sym != RPARENSYM)
@@ -1777,7 +1778,7 @@ int factor(int *type, int *array_i, int *array_i_type)//因子
 				return -1;
 			}
 			i = add_tmp(op_r, i);
-			emit(MOV, "!eax", "", op_r);
+			emit(MOV, "!RETURN_V", "", op_r);
 		}
 		else//普通变量常量参数
 		{
@@ -2026,16 +2027,59 @@ void print_quat()
 	{
 		if (quat_table[i].label !=-1)
 			printf("LABEL_%d\n", quat_table[i].label);
+		/*if (quat_table[i].op == WRITE)
+		{
+			printf("op1    %s\n", quat_table[i].op1);
+			printf("op2    %s\n", quat_table[i].op2);
+			printf("opr    %s\n", quat_table[i].opr);
+			printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
+		}*/
 		printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 	}
 }
 
-
+void gen_mips()
+{
+	mips=fopen("mips.asm", "w");
+	gen_data();
+	gen_text();
+	fclose(mips);
+}
+void gen_data()
+{
+	int i;
+	char tmp[MAX_OP_LEN];
+	fprintf(mips, ".data\n");
+	while (quat_table[gen_mips_ptr].op == CONST)
+	{
+		fprintf(mips, "%-10s:  .word\t%s\n", quat_table[gen_mips_ptr].op2, quat_table[gen_mips_ptr].opr);
+		gen_mips_ptr++;
+	}
+	while (quat_table[gen_mips_ptr].op == VAR)
+	{
+		if(strcmp(quat_table[gen_mips_ptr].opr,""))
+			fprintf(mips, "%-10s:  .space\t%d\n", quat_table[gen_mips_ptr].op2, atoi(quat_table[gen_mips_ptr].opr)*4);
+		else
+			fprintf(mips, "%-10s:  .space\t4\n", quat_table[gen_mips_ptr].op2);
+		gen_mips_ptr++;
+	}
+	for (i = 0; i < str_ptr; i++)
+	{
+		sprintf(tmp, "__str%d", i);
+		fprintf(mips, "%-10s:  .asciiz\t\"%s\"\n", tmp, str_table[i]);
+	}
+}
+void gen_text()
+{
+	fprintf(mips, ".text\n");
+	fprintf(mips, "j\tmain\n");
+}
 int main()
 {
 	int result,i=0;
 	init();
 	program();
 	print_quat();
+	gen_mips();
 	scanf("%d", &result);
 }

@@ -355,9 +355,9 @@ int init()
 	int result = 0;
 	int i = 1;
 	printf("Path:");
-	//scanf("%s", path);
-	//src = fopen(path, "r");
-	src = fopen("C:\\test4.txt", "r");
+	scanf("%s", path);
+	src = fopen(path, "r");
+	//src = fopen("C:\\test4.txt", "r");
 	/*
 	result = getsym();
 	while (result != EOF)
