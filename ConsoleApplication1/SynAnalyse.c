@@ -132,11 +132,13 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 	{
 		if (i < para_ptr)
 		{
-			strcpy(name,sym_table[i].name);
+			char a = '&';
+			strcat(name, a);
+			strcat(name,sym_table[i].name);
 		}
 		else
 		{
-			sprintf(name, "%%%d", i-local_ptr);
+			sprintf(name, "&%%%d", i-local_ptr);
 		}
 		if (array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªÕûÊı
 		{
@@ -2094,6 +2096,55 @@ void gen_data()
 	{
 		sprintf(tmp, "__str%d", i);
 		fprintf(mips, "%-10s:  .asciiz\t\"%s\"\n", tmp, str_table[i]);
+	}
+}
+int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚt0,t1¼Ä´æÆ÷ÖĞ
+{
+	int offset = 0;
+	if (strcmp(op1,""))//Èç¹ûop1²»Îª¿Õ
+	{
+		if (op1[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
+		{
+			op1[0] = '0';
+			offset = atoi(op1);
+			fprintf(mips, "lw  $t0, %d($fp)\n",(-offset-2)*4);
+		}
+		else if (op1[0] == '$')//Èç¹ûÊÇÁÙÊ±±äÁ¿
+		{
+			op1[0] = '0';
+			offset = atoi(op1);
+			if (op1[0] == '$')
+			{
+				fprintf(mips, "lw  $t0, 4($sp)\n");//ÔÚ´¦Àíop2µÄÊ±ºò½«sp-8
+			}
+			else
+			{
+				fprintf(mips, "lw  $t0, 0($sp)\n");
+				fprintf(mips, "addi  $sp, $sp,  4\n");
+			}
+		}
+		else if (op1[0] == '@')//Èç¹ûÊÇ²ÎÊı
+		{
+			op1[0] = '0';
+			offset = atoi(op1);
+			fprintf(mips, "lw  $t0, %d($fp)\n",offset*4);
+		}
+		else if (op1[0] == '&')//Èç¹ûÊÇÊı×é
+		{
+
+		}
+		else if (op1[0] <='9'&&op1[0] >= '0')//Èç¹ûÊÇÁ¢¼´Êı
+		{
+
+		}
+		else//Èç¹ûÊÇ·ÇÊı×éÀàÈ«¾Ö±äÁ¿
+		{
+
+		}
+	}
+	if (strcmp(op2, ""))//Èç¹ûop2²»Îª¿Õ
+	{
+
 	}
 }
 void gen_text()
