@@ -114,6 +114,8 @@ int error(int errortype)
 		printf("assign error"); break;
 	case ASSIGN_DISMATCH:
 		printf("dismatch type between assign statement"); break;
+	case UNDEFINE_ERROR:
+		printf("undefine error"); break;
 	}
 	printf( " in line %d\n", line + 1);
 	return errortype;
