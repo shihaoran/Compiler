@@ -10,6 +10,8 @@ extern char string[MAX_TOKEN_LEN];//×îºó¶ÁÈëµÄ×Ö·û´®
 /*======================END=========================*/
 FILE *mips;
 int gen_mips_ptr=0;
+int local_table[MAX_TAB_LEN];
+int local_offset = 0;//µ±Ç°Ïà¶Ô×ø±êÆ«ÒÆÁ¿
 /*=================ËÄÔªÊ½Éú³É²¿·Ö=====================*/
 int search_sym(char *name)//Ñ°ÕÒµ±Ç°±êÊ¶·ûÔÚ·ûºÅ±íÖÐµÄÎ»ÖÃ
 {
@@ -58,11 +60,30 @@ void add_sym(char *name, int type, int value_type, int int_v, char char_v, char*
 			sym_table[sym_ptr].str_value, str_v;
 			break;
 		}
+		if (in_func)
+		{
+			local_table[sym_ptr - local_ptr] = local_offset;
+			local_offset++;
+		}
 	}
 	else if (type == TYPE_ARRAY)
+	{
 		sym_table[sym_ptr].int_value = int_v;
+		if (in_func)
+		{
+			local_table[sym_ptr - local_ptr] = local_offset;
+			local_offset+=int_v;
+		}
+	}
 	else
+	{
 		sym_table[sym_ptr].int_value = 0;
+		if (in_func&&type==TYPE_VAR)
+		{
+			local_table[sym_ptr - local_ptr] = local_offset;
+			local_offset++;
+		}
+	}
 	sym_ptr++;
 }
 int add_tmp(char *name, int type)
@@ -94,7 +115,7 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 		}
 		else if (i < tmp_ptr)//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
-			sprintf(name, "%%%d", i - local_ptr);
+			sprintf(name, "%%%d", local_table[i - local_ptr]);
 		}
 		else //Èç¹ûÊÇÁÙÊ±±äÁ¿
 		{
@@ -775,6 +796,9 @@ int void_func_defination()
 	emit(EOFUNC, sym_table[func_id_i].name, "", "");
 	for (i = para_ptr; i < sym_ptr; i++)//Çå¿Õµ½²ÎÊýµÄÃû×Ö£¬µ«ÊÇÈÔÈ»Òª±£Áô²ÎÊý£¬ÓÃ×÷²ÎÊý¸öÊýÅÐ¶Ï
 		sym_table[i].name[0] = '\0';
+	for (i = 0; i < local_offset; i++)//ÆäÊµÕâÀï²»Ó¦¸Ãµ½offset£¬µ«ÊÇÕÒ²»µ½¾Ö²¿±äÁ¿¸öÊýÁË£¬Ö»ÄÜÕÒµ½¸ü´óµÄÖµ
+		local_table[i] = 0;
+	local_offset = 0;
 	sym_ptr = local_ptr;
 	return 1;
 }
