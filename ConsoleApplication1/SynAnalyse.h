@@ -35,6 +35,23 @@ void print_quat();
 void gen_mips();
 void gen_data();
 void gen_text();
+void gen_add();
+void gen_sub();
+void gen_mul();
+void gen_div();
+void gen_neg();
+void gen_mov();
+void gen_jmp();
+void gen_j();
+void gen_ret();
+void gen_write();
+void gen_read();
+void gen_para();
+void gen_call();
+void gen_nop();
+int save_result(char *opr);
+int handle_op(char *op1, char *op2);
+
 
 #define MAX_ID_LEN 128 //标识符最长值
 #define MAX_STR_LEN 128 //字符串最长值
