@@ -11,61 +11,61 @@ int error(int errortype)
 	switch (errortype)
 	{
 	case UNKNOWN_SYMBOL:
-		printf( "unknown symbol in line"); break;
+		printf("unknown symbol in line"); break;
 	case STRING_TOO_LONG:
-		printf( "string is too long"); break;
+		printf("string is too long"); break;
 	case MISSING_IDENTIFIER:
-		printf( "missing indentifier"); break;
+		printf("missing indentifier"); break;
 	case WRONG_FORMAT_INTEGER:
-		printf( "wrong format integer"); break;
+		printf("wrong format integer"); break;
 	case UNFINISHED_STRING:
-		printf( "\'\"\'dismatch"); break;
+		printf("\'\"\'dismatch"); break;
 	case UNFINISHED_PROGRAM:
-		printf( "the program is not finished"); break;
+		printf("the program is not finished"); break;
 	case MISSING_STRUCTURER_IN_FUNC_DEFINE:
-		printf( "missing structurer in function define"); break;
+		printf("missing structurer in function define"); break;
 	case DECLARATION_IS_NOT_START_WITH_TYPE:
-		printf( "declartion is not start with type"); break;
+		printf("declartion is not start with type"); break;
 	case DECLARATION_HAVE_NO_EQL:
-		printf( "wrong format of constant declartion"); break;
+		printf("wrong format of constant declartion"); break;
 	case DECLARATION_SHOULD_HAVE_A_ID:
-		printf( "declartion should have a id"); break;
+		printf("declartion should have a id"); break;
 	case WRONG_ASSIGN_SYNTAX:
-		printf( "should not use assign symbol"); break;
+		printf("should not use assign symbol"); break;
 	case WRONG_EXPRESSION:
-		printf( "wrong expression"); break;
+		printf("wrong expression"); break;
 	case ARRAY_OVERFLOW:
-		printf( "array overflow"); break;
+		printf("array overflow"); break;
 	case ARRAY_SUBVALUE_SHOULD_BE_INTEGER:
-		printf( "array subvalue should be an integer"); break;
+		printf("array subvalue should be an integer"); break;
 	case USING_AN_ICON_WITHOUT_DECLARTION:
-		printf( "non-declartion variable"); break;
+		printf("non-declartion variable"); break;
 	case ERROR_VARIABLEDELARTION:
-		printf( "error variable decleartion"); break;
+		printf("error variable decleartion"); break;
 	case ERROR_DATA_TYPE:
-		printf( "error data type"); break;
+		printf("error data type"); break;
 	case ERROR_FUNCTIONDELARATION:
-		printf( "error function declartion"); break;
+		printf("error function declartion"); break;
 	case RE_DECLARATION:
-		printf( "re-declartion"); break;
+		printf("re-declartion"); break;
 	case ERROR_SENTENCE:
-		printf( "error format sentence"); break;
+		printf("error format sentence"); break;
 	case ERROR_RETURN_TYPE:
-		printf( "error return type"); break;
+		printf("error return type"); break;
 	case PARENT_DISMATCH:
-		printf( "parent dismatch"); break;
+		printf("parent dismatch"); break;
 	case ERROR_FOR_SENTENCE:
-		printf( "for sentence error"); break;
+		printf("for sentence error"); break;
 	case ERROR_PROGRAM_STRUCTURE:
-		printf( "error program structure"); break;
+		printf("error program structure"); break;
 	case MISSING_MAIN_FUNC:
-		printf( "missing main function"); break;
+		printf("missing main function"); break;
 	case WRONG_HEAD:
-		printf( "wrong head"); break;
+		printf("wrong head"); break;
 	case MISSING_WHILE:
-		printf( "miss while condition"); break;
+		printf("miss while condition"); break;
 	case MISSING_SENTENCE:
-		printf( "miss sentence"); break;
+		printf("miss sentence"); break;
 	case VAR_DECLARATION_AFTER_FUNC:
 		printf("var declaration after function"); break;
 	case WRONG_STATEMENT:
@@ -114,7 +114,9 @@ int error(int errortype)
 		printf("assign error"); break;
 	case ASSIGN_DISMATCH:
 		printf("dismatch type between assign statement"); break;
+	case UNDEFINE_ERROR:
+		printf("undefine error"); break;
 	}
-	printf( " in line %d\n", line + 1);
+	printf(" in line %d\n", line + 1);
 	return errortype;
 };

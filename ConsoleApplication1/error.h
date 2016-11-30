@@ -61,6 +61,7 @@ enum errorname
 	NRETURN_FUNC_CANT_RETURN,
 	ASSIGN_ERROR,
 	ASSIGN_DISMATCH,
+	UNDEFINE_ERROR,
 };
 int error(int errortype);
 #endif

@@ -132,7 +132,7 @@ int getsym()
 		{
 			catToken(ch);
 			return NOTSTHSYM;
-		}	
+		}
 		else
 		{
 			retract();
@@ -246,7 +246,7 @@ int getsym()
 		return reserveword();
 	case DIGITC0:
 		readch();
-		if (isWhich(ch) == DIGITC|| isWhich(ch) == DIGITC0)
+		if (isWhich(ch) == DIGITC || isWhich(ch) == DIGITC0)
 		{
 			retract();
 			error(WRONG_FORMAT_INTEGER);
@@ -257,7 +257,7 @@ int getsym()
 		return ZEROSYM;
 	case DIGITC:
 		readch();
-		while (isWhich(ch) == DIGITC|| isWhich(ch) == DIGITC0)
+		while (isWhich(ch) == DIGITC || isWhich(ch) == DIGITC0)
 		{
 			catToken(ch);
 			readch();
@@ -299,50 +299,50 @@ int reserveword()
 	strcpy(id, token);
 	return IDSYM;
 }
-void printresult(int result,int i)
+void printresult(int result, int i)
 {
 	switch (result)
 	{
-	case CONSTSYM:printf("%d  CONST  %s\n", i, token);return;
-	case INTSYM:printf("%d  INT  %s\n", i, token);return;
-	case CHARSYM:printf("%d  CHAR  %s\n", i, token);return;
-	case IFSYM:printf("%d  IF  %s\n", i, token);return;
-	case ELSESYM:printf("%d  ELSE  %s\n", i, token);return;
-	case WHILESYM:printf("%d  WHILE  %s\n", i, token);return;
-	case SWITCHSYM :printf("%d  SWITCH  %s\n", i, token);return;
-	case CASESYM :printf("%d  CASE  %s\n", i, token);return;
-	case DEFAULTSYM :printf("%d  DEFAULT  %s\n", i, token);return;
-	case MAINSYM :printf("%d  MAIN  %s\n", i, token);return;
-	case VOIDSYM :printf("%d  VOID  %s\n", i, token);return;
-	case SCANFSYM :printf("%d  SCANF  %s\n", i, token);return;
-	case PRINTFSYM :printf("%d  PRINTF  %s\n", i, token);return;
-	case RETURNSYM :printf("%d  RETURN  %s\n", i, token);return;
-	case IDSYM :printf("%d  IDENTIFER  %s\n", i, token);return;
-	case STRSYM :printf("%d  STRING  %s\n", i, token);return;
-	case CHSYM :printf("%d  CHAR1  %s\n", i, token);return;
-	case NUMSYM :printf("%d  NUMBER  %s\n", i, token);return;
-	case PLUSSYM :printf("%d  PLUS  %s\n", i, token);return;
-	case MINUSSYM :printf("%d  MINUS  %s\n", i, token);return;
-	case TIMESSYM :printf("%d  TIMES  %s\n", i, token);return;
-	case DIVSYM :printf("%d  DIV  %s\n", i, token);return;
-	case LPARENSYM :printf("%d  LPAREN  %s\n", i, token);return;
-	case RPARENSYM :printf("%d  RPAREN  %s\n", i, token);return;
-	case LBPARENSYM :printf("%d  LBPAREN  %s\n", i, token);return;
-	case RBPARENSYM :printf("%d  RBPAREN  %s\n", i, token);return;
-	case LMPARENSYM :printf("%d  LMPAREN  %s\n", i, token);return;
-	case RMPARENSYM :printf("%d  RMPAREN  %s\n", i, token);return;
-	case BIGTHSYM :printf("%d  BIGGERTHAN  %s\n", i, token);return;
-	case SMALLTHSYM :printf("%d  SMALLERTHAN  %s\n", i, token);return;
-	case NOTBTHSYM :printf("%d  NOTBIGGERTHAN  %s\n", i, token);return;
-	case NOTSTHSYM :printf("%d  NOTSMALLTHAN  %s\n", i, token);return;
-	case EQLSYM :printf("%d  EQUAL  %s\n", i, token);return;
-	case NOTESYM :printf("%d  NOTEQUAL  %s\n", i, token);return;
-	case COMMASYM :printf("%d  COMMA  %s\n", i, token);return;
-	case SEMICOLONSYM :printf("%d  SEMICOLON  %s\n", i, token);return;
-	case COLONSYM :printf("%d  COLON  %s\n", i, token);return;
-	case SQUOTESYM :printf("%d  SINGLEQUOTE  %s\n", i, token);return;
-	case QUOTESYM :printf("%d  QUOTE  %s\n", i, token);return;
-	case ASSIGNSYM :printf("%d  ASSIGN  %s\n", i, token);return;
+	case CONSTSYM:printf("%d  CONST  %s\n", i, token); return;
+	case INTSYM:printf("%d  INT  %s\n", i, token); return;
+	case CHARSYM:printf("%d  CHAR  %s\n", i, token); return;
+	case IFSYM:printf("%d  IF  %s\n", i, token); return;
+	case ELSESYM:printf("%d  ELSE  %s\n", i, token); return;
+	case WHILESYM:printf("%d  WHILE  %s\n", i, token); return;
+	case SWITCHSYM:printf("%d  SWITCH  %s\n", i, token); return;
+	case CASESYM:printf("%d  CASE  %s\n", i, token); return;
+	case DEFAULTSYM:printf("%d  DEFAULT  %s\n", i, token); return;
+	case MAINSYM:printf("%d  MAIN  %s\n", i, token); return;
+	case VOIDSYM:printf("%d  VOID  %s\n", i, token); return;
+	case SCANFSYM:printf("%d  SCANF  %s\n", i, token); return;
+	case PRINTFSYM:printf("%d  PRINTF  %s\n", i, token); return;
+	case RETURNSYM:printf("%d  RETURN  %s\n", i, token); return;
+	case IDSYM:printf("%d  IDENTIFER  %s\n", i, token); return;
+	case STRSYM:printf("%d  STRING  %s\n", i, token); return;
+	case CHSYM:printf("%d  CHAR1  %s\n", i, token); return;
+	case NUMSYM:printf("%d  NUMBER  %s\n", i, token); return;
+	case PLUSSYM:printf("%d  PLUS  %s\n", i, token); return;
+	case MINUSSYM:printf("%d  MINUS  %s\n", i, token); return;
+	case TIMESSYM:printf("%d  TIMES  %s\n", i, token); return;
+	case DIVSYM:printf("%d  DIV  %s\n", i, token); return;
+	case LPARENSYM:printf("%d  LPAREN  %s\n", i, token); return;
+	case RPARENSYM:printf("%d  RPAREN  %s\n", i, token); return;
+	case LBPARENSYM:printf("%d  LBPAREN  %s\n", i, token); return;
+	case RBPARENSYM:printf("%d  RBPAREN  %s\n", i, token); return;
+	case LMPARENSYM:printf("%d  LMPAREN  %s\n", i, token); return;
+	case RMPARENSYM:printf("%d  RMPAREN  %s\n", i, token); return;
+	case BIGTHSYM:printf("%d  BIGGERTHAN  %s\n", i, token); return;
+	case SMALLTHSYM:printf("%d  SMALLERTHAN  %s\n", i, token); return;
+	case NOTBTHSYM:printf("%d  NOTBIGGERTHAN  %s\n", i, token); return;
+	case NOTSTHSYM:printf("%d  NOTSMALLTHAN  %s\n", i, token); return;
+	case EQLSYM:printf("%d  EQUAL  %s\n", i, token); return;
+	case NOTESYM:printf("%d  NOTEQUAL  %s\n", i, token); return;
+	case COMMASYM:printf("%d  COMMA  %s\n", i, token); return;
+	case SEMICOLONSYM:printf("%d  SEMICOLON  %s\n", i, token); return;
+	case COLONSYM:printf("%d  COLON  %s\n", i, token); return;
+	case SQUOTESYM:printf("%d  SINGLEQUOTE  %s\n", i, token); return;
+	case QUOTESYM:printf("%d  QUOTE  %s\n", i, token); return;
+	case ASSIGNSYM:printf("%d  ASSIGN  %s\n", i, token); return;
 	case ZEROSYM:printf("%d  ZERO  %s\n", i, token); return;
 	default:
 		break;
@@ -362,9 +362,9 @@ int init()
 	result = getsym();
 	while (result != EOF)
 	{
-		printresult(result,i);
-		i++;
-		result=getsym();
+	printresult(result,i);
+	i++;
+	result=getsym();
 	}
 	//*/
 	return 1;
