@@ -128,6 +128,7 @@ enum quat_op {
 	JGE,//jump when greater than or equal to
 	JL,//jump when less than
 	JLE,//jump when less than or equal to
+	CJNE,//case×¨ÓÃ£¬²»¼õsp
 	RET,
 	WRITE,
 	READ,
@@ -145,7 +146,7 @@ enum quat_op {
 const char * quat_op_name[] = {
 	"CONST","VAR","ADD","SUB","MUL",
 	"DIV","NEG","MOV","JMP","JE","JNE",
-	"JZ","JNZ","JG","JGE","JL","JLE",
+	"JZ","JNZ","JG","JGE","JL","JLE","CJNE",
 	"RET","WRITE","READ","PARA","CALL","NOP",
 	"FUNC","EOFUNC","MAINFUNC","EOMAINFUNC"
 };
