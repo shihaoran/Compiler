@@ -7,12 +7,12 @@ int sym;//È«¾Ö·ûºÅ
 extern int line;//µ±Ç°ĞĞ
 extern char id[MAX_ID_LEN];//×îºó¶ÁÈëµÄ±êÊ¶·û
 extern char string[MAX_TOKEN_LEN];//×îºó¶ÁÈëµÄ×Ö·û´®
-								  /*======================END=========================*/
+/*======================END=========================*/
 FILE *mips;
-int gen_mips_ptr = 0;
+int gen_mips_ptr=0;
 int local_table[MAX_TAB_LEN];
 int local_offset = 0;//µ±Ç°Ïà¶Ô×ø±êÆ«ÒÆÁ¿
-					 /*=================ËÄÔªÊ½Éú³É²¿·Ö=====================*/
+/*=================ËÄÔªÊ½Éú³É²¿·Ö=====================*/
 int search_sym(char *name)//Ñ°ÕÒµ±Ç°±êÊ¶·ûÔÚ·ûºÅ±íÖĞµÄÎ»ÖÃ
 {
 	int i;
@@ -31,7 +31,7 @@ void emit(int op, char* op1, char* op2, char* opr)//Éú³ÉËÄÔªÊ½£¬¼ÓÈëËÄÔªÊ½Êı×éÖĞ
 	int i;
 	if (quat_ptr == 0)
 	{
-		for (i = 0; i<MAX_QUAT_LEN; i++)
+		for(i=0;i<MAX_QUAT_LEN;i++)
 			quat_table[i].label = -1;
 	}
 	quat_table[quat_ptr].op = op;
@@ -50,13 +50,13 @@ void add_sym(char *name, int type, int value_type, int int_v, char char_v, char*
 	{
 		switch (value_type)
 		{
-		case TYPE_VALUE_INT:
-			sym_table[sym_ptr].int_value = int_v;
+		case TYPE_VALUE_INT: 
+			sym_table[sym_ptr].int_value = int_v; 
 			break;
-		case TYPE_VALUE_CHAR:
+		case TYPE_VALUE_CHAR: 
 			sym_table[sym_ptr].char_value = char_v;
 			break;
-		case TYPE_VALUE_STR:
+		case TYPE_VALUE_STR: 
 			sym_table[sym_ptr].str_value, str_v;
 			break;
 		}
@@ -72,13 +72,13 @@ void add_sym(char *name, int type, int value_type, int int_v, char char_v, char*
 		if (in_func)
 		{
 			local_table[sym_ptr - local_ptr] = local_offset;
-			local_offset += int_v;
+			local_offset+=int_v;
 		}
 	}
 	else
 	{
 		sym_table[sym_ptr].int_value = 0;
-		if (in_func&&type == TYPE_VAR)
+		if (in_func&&type==TYPE_VAR)
 		{
 			local_table[sym_ptr - local_ptr] = local_offset;
 			local_offset++;
@@ -93,7 +93,7 @@ int add_tmp(char *name, int type)
 	tmp_cnt++;
 	return sym_ptr - 1;
 }
-int gen_op(char *name, int i, int type, int array_i, int array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªintÁ¢¼´Êı, 2ÎªcharÁ¢¼´Êı, 3ÎªÊı×é£¨ÔÚÏÂ²ã£¬´Ë´¦²»»á·µ»Ø3£©
+int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªintÁ¢¼´Êı, 2ÎªcharÁ¢¼´Êı, 3ÎªÊı×é£¨ÔÚÏÂ²ã£¬´Ë´¦²»»á·µ»Ø3£©
 {
 	char tmp[MAX_OP_LEN];
 	char tmp1[MAX_OP_LEN];
@@ -111,7 +111,7 @@ int gen_op(char *name, int i, int type, int array_i, int array_i_type)//0Îª·ûºÅ±
 		}
 		else if (i < local_ptr)//Èç¹ûÊÇ²ÎÊı
 		{
-			sprintf(name, "@%d", i - para_ptr);
+			sprintf(name, "@%d", i-para_ptr);
 		}
 		else if (i < tmp_ptr)//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
@@ -133,11 +133,11 @@ int gen_op(char *name, int i, int type, int array_i, int array_i_type)//0Îª·ûºÅ±
 		if (i < para_ptr)
 		{
 			name[0] = '&';
-			strcat(name, sym_table[i].name);
+			strcat(name,sym_table[i].name);
 		}
 		else
 		{
-			sprintf(name, "&%%%d", i - local_ptr);
+			sprintf(name, "&%%%d", i-local_ptr);
 		}
 		if (array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªÕûÊı
 		{
@@ -146,7 +146,7 @@ int gen_op(char *name, int i, int type, int array_i, int array_i_type)//0Îª·ûºÅ±
 		}
 		else//Èç¹ûÊÇ·ûºÅ±íÖ¸Õë£¬Éú³ÉÏàÓ¦µÄ±äÁ¿ºÅ
 		{
-			tmp_type = gen_op(tmp, array_i, 0, 0, 0);//TODO£ºÈç¹ûÊÇchar?
+			tmp_type=gen_op(tmp, array_i, 0, 0, 0);//TODO£ºÈç¹ûÊÇchar?
 			sprintf(tmp1, "[%s]", tmp);
 			strcat(name, tmp1);
 		}
@@ -189,7 +189,7 @@ int const_defination()//³£Á¿¶¨Òå
 		integer();
 		add_sym(id, TYPE_CONST, TYPE_VALUE_INT, num_sign, 0, NULL);
 		sprintf(temp_str, "%d", num_sign);
-		if (in_func)
+		if(in_func)
 			emit(CONST, "INT", "", temp_str);
 		else
 			emit(CONST, "INT", id, temp_str);
@@ -222,10 +222,10 @@ int const_defination()//³£Á¿¶¨Òå
 			else
 				emit(CONST, "INT", id, temp_str);
 		}
-		printf("Line:%d --This is a const_defination_statement!\n", line + 1);
+		printf("Line:%d --This is a const_defination_statement!\n", line+1);
 		return 1;
 	}
-	else if (sym == CHARSYM)
+	else if (sym==CHARSYM)
 	{
 		sym = getsym();
 		if (sym != IDSYM)
@@ -292,7 +292,7 @@ int const_defination()//³£Á¿¶¨Òå
 				emit(CONST, "CHAR", id, temp_str);
 			sym = getsym();
 		}
-		printf("Line:%d --This is a const_defination_statement!\n", line + 1);
+		printf("Line:%d --This is a const_defination_statement!\n", line+1);
 		return 1;
 	}
 	else
@@ -322,7 +322,7 @@ int var_defination()
 	char temp_str[MAX_OP_LEN];
 	int head_type;
 	head_type = head();
-	if (head_type == 0)
+	if (head_type==0)
 	{
 		error(WRONG_HEAD);
 		return 0;
@@ -397,10 +397,10 @@ int var_defination_backend(int head_type)
 	char temp_str[MAX_OP_LEN];
 	if (sym == SEMICOLONSYM)
 	{
-		printf("Line:%d --This is a var_defination_statement!\n", line + 1);
+		printf("Line:%d --This is a var_defination_statement!\n", line+1);
 		return 1;
 	}
-	else if (sym != COMMASYM)//Èç¹ûÊÇ·ÖºÅ£¨¿Õ£©»òÕß¶ººÅ
+	else if(sym!=COMMASYM)//Èç¹ûÊÇ·ÖºÅ£¨¿Õ£©»òÕß¶ººÅ
 	{
 		error(ERROR_VARIABLEDELARTION);
 		return 0;
@@ -473,12 +473,12 @@ int var_defination_backend(int head_type)
 			}
 		}
 	}
-	printf("Line:%d --This is a var_defination_statement!\n", line + 1);
+	printf("Line:%d --This is a var_defination_statement!\n", line+1);
 	return 1;
 }
 int var_declaration()
 {
-	while (sym == INTSYM || sym == CHARSYM)
+	while (sym == INTSYM||sym==CHARSYM)
 	{
 		var_defination();
 		if (sym != SEMICOLONSYM)
@@ -626,7 +626,7 @@ int value_parameter_table(int i)
 			return 0;
 		}
 		now_ptr++;
-		while (sym == COMMASYM)
+		while (sym==COMMASYM)
 		{
 			sym = getsym();
 			if (sym_table[now_ptr].type != TYPE_PARA)
@@ -659,7 +659,7 @@ int value_parameter_table(int i)
 			return 0;
 		}
 		stack_ptr--;
-		for (stack_ptr; stack_ptr >= 0; stack_ptr--)
+		for(stack_ptr;stack_ptr>=0;stack_ptr--)
 			emit(PARA, para_stack[stack_ptr], "", "");
 		return 1;
 	}
@@ -681,7 +681,7 @@ int parameter_table()
 			return 0;
 		}
 		position = search_sym(id);
-		if (position >= para_ptr)
+		if (position >= para_ptr) 
 		{
 			error(DUPLICATE_DEFINE_IDENTIFIER);
 			return 0;
@@ -722,7 +722,7 @@ int parameter_table()
 		}
 		return 1;
 	}
-	else if (sym == RPARENSYM)//Îª¿Õ
+	else if(sym == RPARENSYM)//Îª¿Õ
 	{
 		return 1;
 	}
@@ -765,7 +765,7 @@ int void_func_defination()
 	{
 		return 0;
 	}
-	if (sym != RPARENSYM)
+	if(sym!=RPARENSYM)
 	{
 		error(ERROR_PARAMETER);
 		return 0;
@@ -829,7 +829,7 @@ int return_func_defination_backend(int head_type)
 		return 0;
 	}
 	position = search_sym(id);
-	if (position >= 0)
+	if (position >= 0 )
 	{
 		error(DUPLICATE_DEFINE_IDENTIFIER);
 		return 0;
@@ -854,7 +854,7 @@ int return_func_defination_backend(int head_type)
 	}
 	sym = getsym();
 	compound_statement();
-	if (sym != RBPARENSYM)
+	if(sym!=RBPARENSYM)
 	{
 		error(BRACE_DISMATCH);
 		return 0;
@@ -892,7 +892,7 @@ int main_func()//Ö÷º¯Êı,void mainÇ°ÃæÅĞ¶Ï¹ıÁË
 	{
 		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
 		return 0;
-	}
+	}	
 	sym = getsym();
 	compound_statement();
 	if (has_return)
@@ -926,7 +926,7 @@ int compound_statement()//¸´ºÏÓï¾ä
 	{
 		return 1;
 	}
-	while (statement())
+	while (statement()) 
 	{
 		if (sym == RBPARENSYM)
 		{
@@ -988,7 +988,7 @@ int assign_statement(int i)
 	{
 		sym = getsym();
 		now_ptr = expression(&type);//ÕâÀï¿ÉÄÜ·µ»Ø¸ºÖµ
-		if (now_ptr == -1 && type == 4)
+		if (now_ptr==-1&&type==4)
 		{
 			return 0;
 		}
@@ -1022,7 +1022,7 @@ int statement()
 		{
 			return 0;
 		}
-		printf("Line:%d --This is an if_statement!\n", line + 1);
+		printf("Line:%d --This is an if_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym == WHILESYM)
@@ -1031,13 +1031,13 @@ int statement()
 		{
 			return 0;
 		}
-		printf("Line:%d --This is a while_statement!\n", line + 1);
+		printf("Line:%d --This is a while_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym == LBPARENSYM)//TODO£º¼ì²éÒ»ÏÂ
 	{
 		sym = getsym();
-		while (statement())
+		while (statement()) 
 		{
 			if (sym == RBPARENSYM)
 				break;
@@ -1047,7 +1047,7 @@ int statement()
 			error(BRACE_DISMATCH);
 			return 0;
 		}
-		printf("Line:%d --This is a statement list!\n", line + 1);
+		printf("Line:%d --This is a statement list!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -1065,8 +1065,8 @@ int statement()
 		if (sym == LPARENSYM)
 		{
 			sym = getsym();
-			type = call_func(i);
-			if (type == 4)
+			type=call_func(i);
+			if (type==4)
 			{
 				return 0;
 			}
@@ -1075,11 +1075,11 @@ int statement()
 				error(MISSING_SEMICOLON);
 				return 0;
 			}
-			printf("Line:%d --This is a function_call_statement!\n", line + 1);
+			printf("Line:%d --This is a function_call_statement!\n", line+1);
 		}
-		else if (sym == ASSIGNSYM || sym == LMPARENSYM)//¸³ÖµÓï¾ä
+		else if (sym == ASSIGNSYM|| sym == LMPARENSYM)//¸³ÖµÓï¾ä
 		{
-			if (!assign_statement(i))
+			if(!assign_statement(i))
 			{
 				return 0;
 			}
@@ -1103,7 +1103,7 @@ int statement()
 			error(MISSING_SEMICOLON);
 			return 0;
 		}
-		printf("Line:%d --This is a scanf_statement!\n", line + 1);
+		printf("Line:%d --This is a scanf_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -1118,7 +1118,7 @@ int statement()
 			error(MISSING_SEMICOLON);
 			return 0;
 		}
-		printf("Line:%d --This is a printf_statement!\n", line + 1);
+		printf("Line:%d --This is a printf_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -1128,7 +1128,7 @@ int statement()
 		{
 			return 0;
 		}
-		printf("Line:%d --This is a switch_statement!\n", line + 1);
+		printf("Line:%d --This is a switch_statement!\n", line+1);
 		return 1;
 	}
 	else if (sym == RETURNSYM)
@@ -1142,13 +1142,13 @@ int statement()
 			error(MISSING_SEMICOLON);
 			return 0;
 		}
-		printf("Line:%d --This is a return_statement!\n", line + 1);
+		printf("Line:%d --This is a return_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
 	else if (sym == SEMICOLONSYM)
 	{
-		printf("Line:%d --This is an empty_statement!\n", line + 1);
+		printf("Line:%d --This is an empty_statement!\n", line+1);
 		sym = getsym();
 		return 1;
 	}
@@ -1263,9 +1263,9 @@ int condition_statement(char *label)//ÔÚÆäÖĞÉú³ÉÌõ¼şÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 		return 0;
 	}
 	gen_op(op_1, i, type, 0, 0);
-	if (sym == BIGTHSYM || sym == SMALLTHSYM ||
-		sym == NOTBTHSYM || sym == NOTSTHSYM ||
-		sym == EQLSYM || sym == NOTESYM)
+	if (sym == BIGTHSYM||sym == SMALLTHSYM||
+		sym == NOTBTHSYM||sym == NOTSTHSYM||
+		sym == EQLSYM||sym == NOTESYM)
 	{
 		temp_op = sym;
 		sym = getsym();
@@ -1307,7 +1307,7 @@ int scanf_statement()
 		return 0;
 	}
 	sym = getsym();
-	if (sym != IDSYM)
+	if(sym!=IDSYM)
 	{
 		error(ERROR_IN_SCANF);
 		return 0;
@@ -1323,7 +1323,7 @@ int scanf_statement()
 		error(IDENTIFIER_TYPE_DISMATCH);
 		return 0;
 	}
-	gen_op(op_1, i, 0, 0, 0);
+	gen_op(op_1,i,0,0,0);
 	emit(READ, "", "", op_1);
 	sym = getsym();
 	while (sym == COMMASYM)
@@ -1349,7 +1349,7 @@ int scanf_statement()
 		emit(READ, "", "", op_1);
 		sym = getsym();
 	}
-	if (sym != RPARENSYM)
+	if(sym!=RPARENSYM)
 	{
 		error(ERROR_IN_SCANF);
 		return 0;
@@ -1361,7 +1361,7 @@ int printf_statement()
 {
 	int i, type;
 	char str[MAX_OP_LEN];
-	char op_1[MAX_OP_LEN];
+	char op_1[MAX_OP_LEN ];
 	if (sym != PRINTFSYM)
 	{
 		error(ERROR_IN_PRINTF);
@@ -1487,7 +1487,7 @@ int switch_statement()
 	return 1;
 }
 //·µ»ØÖµÊÇ×îºóµÄcaseÌø×ªµÄlabelºÅ
-int switch_table(int i, char *op_1)//i±íÊ¾³É¹¦ºóÎŞÌõ¼şÌø×ªµ½µÄlabelºÅ,op_1ÊÇÒª±È½ÏµÄop
+int switch_table(int i,char *op_1)//i±íÊ¾³É¹¦ºóÎŞÌõ¼şÌø×ªµ½µÄlabelºÅ,op_1ÊÇÒª±È½ÏµÄop
 {
 	int tmp;//±£´æµ±Ç°µÄÅĞ¶ÏÖµ
 	int f_label;//±£´æÉÏÒ»¸ölabelºÅ
@@ -1504,7 +1504,7 @@ int switch_table(int i, char *op_1)//i±íÊ¾³É¹¦ºóÎŞÌõ¼şÌø×ªµ½µÄlabelºÅ,op_1ÊÇÒª±È
 		sym = getsym();
 		tmp = c;
 	}
-	else if (integer())
+	else if (integer()) 
 	{
 		tmp = num_sign;
 	}
@@ -1515,7 +1515,7 @@ int switch_table(int i, char *op_1)//i±íÊ¾³É¹¦ºóÎŞÌõ¼şÌø×ªµ½µÄlabelºÅ,op_1ÊÇÒª±È
 	}
 	sprintf(op_2, "%d", tmp);//½«Á¢¼´ÊıÉú³Éop
 	sprintf(label, "LABEL_%d", label_ptr);//Éú³Éµ±Ç°label¶ÔÓ¦µÄop
-	emit(JNE, op_1, op_2, label);
+	emit(JNE, op_1,op_2 , label);
 	f_label = label_ptr;//±£´ælabelºÅ£¬ÒÔ±ãÏÂ¸öcaseµ÷ÓÃ
 	label_ptr++;
 	if (sym != COLONSYM)
@@ -1550,7 +1550,7 @@ int switch_table(int i, char *op_1)//i±íÊ¾³É¹¦ºóÎŞÌõ¼şÌø×ªµ½µÄlabelºÅ,op_1ÊÇÒª±È
 		sprintf(op_2, "%d", tmp);
 		sprintf(label, "LABEL_%d", label_ptr);//Éú³Éµ±Ç°label¶ÔÓ¦µÄop
 		emit(JNE, op_1, op_2, label);
-		quat_table[quat_ptr - 1].label = f_label;//ÉèÖÃÉÏÒ»¸öcaseÖ¸Ïòµ±Ç°label
+		quat_table[quat_ptr-1].label = f_label;//ÉèÖÃÉÏÒ»¸öcaseÖ¸Ïòµ±Ç°label
 		f_label = label_ptr;//±£´ælabelºÅ£¬ÒÔ±ãÏÂ¸öcaseµ÷ÓÃ
 		label_ptr++;
 		if (sym != COLONSYM)
@@ -1604,11 +1604,11 @@ int return_statement()
 	{
 		sym = getsym();
 		i = expression(&type);
-		if (i == -1 && type == 4)
+		if (i==-1&&type==4)
 		{
 			return 0;
 		}
-		gen_op(op_1, i, type, 0, 0);
+		gen_op(op_1,i,type,0,0);
 		emit(RET, op_1, "", "");
 		if (sym != RPARENSYM)
 		{
@@ -1630,18 +1630,18 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 	char op_2[MAX_OP_LEN] = { 0 };
 	char op_r[MAX_OP_LEN] = { 0 };
 	int i;
-	int array_i = 0, array_i_type = 0;
-	int tmp_type1, tmp_type2;
-	int first = 0;//±£´æ×î¿ªÊ¼µÄ·ûºÅ
-	int flag = 0;//ÊÇ·ñÖ»ÓĞÒ»Ïî
+	int array_i=0,array_i_type=0;
+	int tmp_type1,tmp_type2;
+	int first=0;//±£´æ×î¿ªÊ¼µÄ·ûºÅ
+	int flag=0;//ÊÇ·ñÖ»ÓĞÒ»Ïî
 	int op;//¶àÏîÊ±µ±Ç°ÊÇÕı¸ººÅ
 	if (sym == PLUSSYM || sym == MINUSSYM)//ÎªÁËÄÜ¹»Ö±½Ó 
 	{
 		first = (sym == PLUSSYM) ? 0 : 1;
 		sym = getsym();
 	}
-	i = item(type, &array_i, &array_i_type);
-	if (*type == 4 && i == -1)
+	i=item(type,&array_i,&array_i_type);
+	if (*type == 4&&i==-1)
 	{
 		*type = 4;
 		return -1;
@@ -1650,7 +1650,7 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 	{
 		*type = gen_op(op_1, i, *type, array_i, array_i_type);
 		i = add_tmp(op_r, *type);
-		emit(MOV, op_1, "", op_r);
+		emit(MOV, op_1, "",op_r);
 		*type = 0;
 	}
 	while (sym == PLUSSYM || sym == MINUSSYM)
@@ -1661,7 +1661,7 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 		{
 			if (*type == 1 || *type == 2) //Èç¹ûÊÇÁ¢¼´Êı,È¡¸º´æÈëÁÙÊ±±äÁ¿
 			{
-				tmp_type1 = gen_op(op_2, -i, *type, array_i, array_i_type);
+				tmp_type1 = gen_op(op_2,-i,*type,array_i,array_i_type);
 				i = add_tmp(op_1, tmp_type1);
 				emit(MOV, op_2, "", op_1);
 			}
@@ -1696,7 +1696,7 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 		emit(op, op_1, op_2, op_r);
 		*type = 0;
 	}
-	if ((!flag) && first)//Èç¹ûÖ»ÓĞÒ»Ïî
+	if ((!flag)&&first)//Èç¹ûÖ»ÓĞÒ»Ïî
 	{
 		if (*type == 1 || *type == 2)//Èç¹ûÊÇÁ¢¼´Êı,Ö±½Ó·µ»Ø¸ºÖµ
 		{
@@ -1711,7 +1711,7 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 	}
 	return i;
 }
-int item(int *type, int *array_i, int *array_i_type)//Ïî
+int item(int *type,int *array_i,int *array_i_type)//Ïî
 {
 	char op_1[MAX_OP_LEN] = { 0 };
 	char op_2[MAX_OP_LEN] = { 0 };
@@ -1800,7 +1800,7 @@ int factor(int *type, int *array_i, int *array_i_type)//Òò×Ó
 		{
 			sym = getsym();
 			i = call_func(i);
-			if (i == 4)
+			if (i==4)
 			{
 				*type = 4;
 				return -1;
@@ -1838,7 +1838,7 @@ int factor(int *type, int *array_i, int *array_i_type)//Òò×Ó
 	{
 		sym = getsym();
 		i = expression(type);
-		if (*type == 4 && i == -1)
+		if (*type==4&&i==-1)
 		{
 			*type = 4;
 			return -1;
@@ -1902,7 +1902,7 @@ int program()
 		}
 		else//int char
 		{
-			head_type = head();
+			head_type=head();
 			if (head_type == 0)
 			{
 				error(WRONG_HEAD);
@@ -2053,14 +2053,14 @@ void print_quat()
 	int i;
 	for (i = 0; i < quat_ptr; i++)
 	{
-		if (quat_table[i].label != -1)
+		if (quat_table[i].label !=-1)
 			printf("LABEL_%d\n", quat_table[i].label);
 		/*if (quat_table[i].op == WRITE)
 		{
-		printf("op1    %s\n", quat_table[i].op1);
-		printf("op2    %s\n", quat_table[i].op2);
-		printf("opr    %s\n", quat_table[i].opr);
-		printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
+			printf("op1    %s\n", quat_table[i].op1);
+			printf("op2    %s\n", quat_table[i].op2);
+			printf("opr    %s\n", quat_table[i].opr);
+			printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 		}*/
 		printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 	}
@@ -2068,7 +2068,7 @@ void print_quat()
 
 void gen_mips()
 {
-	mips = fopen("mips.asm", "w");
+	mips=fopen("mips.asm", "w");
 	gen_data();
 	gen_text();
 	fclose(mips);
@@ -2085,8 +2085,8 @@ void gen_data()
 	}
 	while (quat_table[gen_mips_ptr].op == VAR)
 	{
-		if (strcmp(quat_table[gen_mips_ptr].opr, ""))
-			fprintf(mips, "%-10s:  .space\t%d\n", quat_table[gen_mips_ptr].op2, atoi(quat_table[gen_mips_ptr].opr) * 4);
+		if(strcmp(quat_table[gen_mips_ptr].opr,""))
+			fprintf(mips, "%-10s:  .space\t%d\n", quat_table[gen_mips_ptr].op2, atoi(quat_table[gen_mips_ptr].opr)*4);
 		else
 			fprintf(mips, "%-10s:  .space\t4\n", quat_table[gen_mips_ptr].op2);
 		gen_mips_ptr++;
@@ -2097,20 +2097,20 @@ void gen_data()
 		fprintf(mips, "%-10s:  .asciiz\t\"%s\"\n", tmp, str_table[i]);
 	}
 }
-int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷ÖĞ
-								   //-1±¨´í,0Ö»ÓĞop1,1Ö»ÓĞop2,2¶¼ÓĞ
+int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷ÖĞ
+//-1±¨´í,0Ö»ÓĞop1,1Ö»ÓĞop2,2¶¼ÓĞ
 {
 	int offset = 0;
 	int flag1 = 0;
 	int flag2 = 0;
-	if (strcmp(op1, ""))//Èç¹ûop1²»Îª¿Õ
+	if (strcmp(op1,""))//Èç¹ûop1²»Îª¿Õ
 	{
 		flag1 = 1;
 		if (op1[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
 			op1[0] = '0';
 			offset = atoi(op1);
-			fprintf(mips, "lw  $s0, %d($fp)\n", (-offset - 16) * 4);//Áô³öÑ¹Õ»¼Ä´æÆ÷¿Õ¼ä
+			fprintf(mips, "lw  $s0, %d($fp)\n",(-offset-16)*4);//Áô³öÑ¹Õ»¼Ä´æÆ÷¿Õ¼ä
 		}
 		else if (op1[0] == '$')//Èç¹ûÊÇÁÙÊ±±äÁ¿
 		{
@@ -2130,7 +2130,7 @@ int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷
 		{
 			op1[0] = '0';
 			offset = atoi(op1);
-			fprintf(mips, "lw  $s0, %d($fp)\n", offset * 4);
+			fprintf(mips, "lw  $s0, %d($fp)\n",offset*4);
 		}
 		else if (op1[0] == '&')//Èç¹ûÊÇÊı×é£¬×¢Òâ£¬´ËÊ±Ó¦ÎªMOVÓï¾ä£¬ÇÒop2Ó¦Îª¿Õ
 		{
@@ -2155,7 +2155,7 @@ int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷
 						temp_num[j++] = op1[i];
 					}
 					temp_num[j] = '\0';
-					index = atoi(temp_num);
+					index= atoi(temp_num);
 					fprintf(mips, "lw  $t0, %d($fp)\n", index * 4);//È¡²ÎÊıÖµÎªÔªËØÆ«ÒÆÁ¿
 					fprintf(mips, "addi  $t1, $0,  %d\n", (-offset - 16) * 4);//Êı×é»ùµØÖ·Æ«ÒÆÁ¿
 					fprintf(mips, "sub  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
@@ -2183,7 +2183,7 @@ int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷
 						temp_num[j++] = op1[i];
 					}
 					temp_num[j] = '\0';
-					index = atoi(temp_num);
+					index= atoi(temp_num);
 					fprintf(mips, "lw  $t0, 0($sp)\n");//È¡Õ»¶¥ÔªËØÎªÔªËØÆ«ÒÆÁ¿
 					fprintf(mips, "addi  $sp, $sp,  4\n");//Õ»¶¥ÏÂÒÆ
 					fprintf(mips, "addi  $t1, $0,  %d\n", (-offset - 16) * 4);//Êı×é»ùµØÖ·Æ«ÒÆÁ¿
@@ -2191,15 +2191,15 @@ int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷
 					fprintf(mips, "add  $t1, $fp,  $t1\n");//¼ÓÉÏ»ùµØÖ·
 					fprintf(mips, "lw  $s0, 0($t1)\n");
 				}
-				else if (op1[i] >= '0'&&op1[i] <= '9')//ÊÇÁ¢¼´Êı
+				else if(op1[i]>='0'&&op1[i] <= '9')//ÊÇÁ¢¼´Êı
 				{
-					for (i; op1[i] != ']'; i++)
+					for (i ; op1[i] != ']'; i++)
 					{
 						temp_num[j++] = op1[i];
 					}
 					temp_num[j] = '\0';
-					index = atoi(temp_num);
-					fprintf(mips, "lw  $s0, %d($fp)\n", (-offset - 16 - index) * 4);//Ö±½ÓÈ¡
+					index= atoi(temp_num);
+					fprintf(mips, "lw  $s0, %d($fp)\n", (-offset - 16-index) * 4);//Ö±½ÓÈ¡
 				}
 				else//ÊÇÈ«¾Ö±äÁ¿»ò³£Á¿
 				{
@@ -2273,7 +2273,7 @@ int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷
 					temp_num[j] = '\0';
 					index = atoi(temp_num);
 					fprintf(mips, "la  $t0, %s\n", temp_name);//È¡È«¾ÖÁ¿µØÖ·
-					fprintf(mips, "lw  $s0, %d($t0)\n", index * 4);//Ö±½ÓÈ¡
+					fprintf(mips, "lw  $s0, %d($t0)\n", index* 4);//Ö±½ÓÈ¡
 				}
 				else//ÊÇÈ«¾Ö±äÁ¿»ò³£Á¿
 				{
@@ -2289,10 +2289,10 @@ int handle_op(char *op1, char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷
 					fprintf(mips, "lw  $s0, 0($t1)\n");
 				}
 			}
-
+			
 
 		}
-		else if (op1[0] <= '9'&&op1[0] >= '0')//Èç¹ûÊÇÁ¢¼´Êı
+		else if (op1[0] <='9'&&op1[0] >= '0')//Èç¹ûÊÇÁ¢¼´Êı
 		{
 			offset = atoi(op1);
 			fprintf(mips, "addi  $s0, $0,  %d\n", offset);//Ö±½ÓÓÃÁ¢¼´Êı
@@ -2367,7 +2367,7 @@ void gen_text()
 }
 int main()
 {
-	int result, i = 0;
+	int result,i=0;
 	init();
 	program();
 	print_quat();
