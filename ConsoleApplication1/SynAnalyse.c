@@ -2098,6 +2098,7 @@ void gen_data()
 		fprintf(mips, "%-10s:  .asciiz\t\"%s\"\n", tmp, str_table[i]);
 	}
 }
+
 int handle_op(char *op1,char *op2)//生成op所对应的机器码，将结果存在t0,t1寄存器中
 {
 	int offset = 0;
