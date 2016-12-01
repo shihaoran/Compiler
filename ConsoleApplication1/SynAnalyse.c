@@ -2977,13 +2977,21 @@ void gen_para()
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\taddi  $sp, $sp,  -4\n");//移动栈指针
-	fprintf(mips, "\tsw  $s0, 0($sp)\n");//存入参数
+	if (para_cnt == 0)
+	{
+		fprintf(mips, "\tmove  $t3, $sp\n");//将sp存入临时变量，在para中不再修改sp，改为修改t3
+	}
+	fprintf(mips, "\taddi  $t3, $t3,  -4\n");//移动栈指针
+	fprintf(mips, "\tsw  $s0, 0($t3)\n");//存入参数
 	para_cnt++;
 }
 void gen_call()
 {
-	fprintf(mips, "\taddi  $t0, $sp, %d\n", -para_cnt * 4);
+	if (para_cnt != 0)
+	{
+		fprintf(mips, "\tmove  $sp, $t3\n");//如果有参数，说明修改过t3，存修改过的t3到sp
+	}
+	fprintf(mips, "\taddi  $t0, $sp, %d\n", para_cnt * 4);//存没加过参数时的sp到t0,此时如果取过临时变量，有死区	
 	fprintf(mips, "\tmove  $a0, $t0\n");//存参数前sp至a0
 	fprintf(mips, "\tmove  $a1, $fp\n");//存fp至a1
 	fprintf(mips, "\tjal\t%s\n", quat_table[gen_mips_ptr].op1);//跳转到函数label处，将下一条指令地址存入$ra
