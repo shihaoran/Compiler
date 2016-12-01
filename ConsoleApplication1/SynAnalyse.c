@@ -888,6 +888,7 @@ int main_func()//主函数,void main前面判断过了
 		error(WRONG_HEAD);
 		return 0;
 	}
+	para_ptr = sym_ptr;//置参数起始位置
 	printf("Line:%d --This is a main_function_defination_statement!\n", line + 1);
 	sym = getsym();
 	if (sym != LBPARENSYM)
@@ -1351,7 +1352,10 @@ int scanf_statement()
 		return 0;
 	}
 	gen_op(op_1,i,0,0,0);
-	emit(READ, "", "", op_1);
+	if (sym_table[i].value_type == TYPE_VALUE_CHAR)
+		emit(CREAD, "", "", op_1);
+	else
+		emit(READ, "", "", op_1);
 	sym = getsym();
 	while (sym == COMMASYM)
 	{
@@ -1373,7 +1377,10 @@ int scanf_statement()
 			return 0;
 		}
 		gen_op(op_1, i, 0, 0, 0);
-		emit(READ, "", "", op_1);
+		if (sym_table[i].value_type == TYPE_VALUE_CHAR)
+			emit(CREAD, "", "", op_1);
+		else
+			emit(READ, "", "", op_1);
 		sym = getsym();
 	}
 	if(sym!=RPARENSYM)
@@ -2743,6 +2750,7 @@ void gen_text()//生成代码主函数
 				case RET:gen_ret(); break;
 				case WRITE:gen_write(); break;
 				case READ:gen_read(); break;
+				case CREAD:gen_read(); break;
 				case PARA:gen_para(); break;
 				case CALL:gen_call(); break;
 				case NOP:gen_nop(); break;
@@ -2950,7 +2958,10 @@ void gen_write()
 }
 void gen_read()
 {
-	fprintf(mips, "\tli  $v0, 5\n");//置v0为读取整数
+	if(quat_table[gen_mips_ptr].op==READ)
+		fprintf(mips, "\tli  $v0, 5\n");//置v0为读取整数
+	else//是CREAD
+		fprintf(mips, "\tli  $v0, 12\n");//置v0为读取字符
 	fprintf(mips, "\tsyscall\n");
 	fprintf(mips, "\tadd  $s2, $v0, $0\n");//置s2为读取入的整数
 	if (!save_result(quat_table[gen_mips_ptr].opr))
