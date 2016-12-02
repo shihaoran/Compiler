@@ -1745,6 +1745,7 @@ int expression(int *type)//表达式,传入的指针表示返回的数的类型，0为符号表指针，1
 			*type = gen_op(op_1, i, *type, array_i, array_i_type);
 			i = add_tmp(op_r, *type);
 			emit(NEG, op_1, "", op_r);//如果不是，是指针，新增临时变量取反
+			*type = 0;
 		}
 	}
 	return i;
@@ -2987,12 +2988,17 @@ void gen_para()
 }
 void gen_call()
 {
+	/*if (para_cnt != 0)
+	{
+		fprintf(mips, "\tmove  $sp, $t3\n");//如果有参数，说明修改过t3，存修改过的t3到sp
+	}
+	fprintf(mips, "\taddi  $t0, $sp, %d\n", para_cnt * 4);//存没加过参数时的sp到t0,此时如果取过临时变量，有死区
+	*/
+	fprintf(mips, "\tmove  $a0, $sp\n");//存参数前sp至a0
 	if (para_cnt != 0)
 	{
 		fprintf(mips, "\tmove  $sp, $t3\n");//如果有参数，说明修改过t3，存修改过的t3到sp
 	}
-	fprintf(mips, "\taddi  $t0, $sp, %d\n", para_cnt * 4);//存没加过参数时的sp到t0,此时如果取过临时变量，有死区	
-	fprintf(mips, "\tmove  $a0, $t0\n");//存参数前sp至a0
 	fprintf(mips, "\tmove  $a1, $fp\n");//存fp至a1
 	fprintf(mips, "\tjal\t%s\n", quat_table[gen_mips_ptr].op1);//跳转到函数label处，将下一条指令地址存入$ra
 	para_cnt = 0;
