@@ -139,7 +139,7 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 		}
 		else
 		{
-			sprintf(name, "&%%%d", i-local_ptr);
+			sprintf(name, "&%%%d", local_table[i - local_ptr]);
 		}
 		if (array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªÕûÊı
 		{
