@@ -131,6 +131,7 @@ enum quat_op {
 	CJNE,//case×¨ÓÃ£¬²»¼õsp
 	RET,
 	WRITE,
+	CWRITE,
 	READ,
 	CREAD,//¶Á×Ö·û
 	PARA,
@@ -148,7 +149,7 @@ const char * quat_op_name[] = {
 	"CONST","VAR","ADD","SUB","MUL",
 	"DIV","NEG","MOV","JMP","JE","JNE",
 	"JZ","JNZ","JG","JGE","JL","JLE","CJNE",
-	"RET","WRITE","READ","CREAD","PARA","CALL","NOP",
+	"RET","WRITE","CWRITE","READ","CREAD","PARA","CALL","NOP",
 	"FUNC","EOFUNC","MAINFUNC","EOMAINFUNC"
 };
 

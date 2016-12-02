@@ -1252,11 +1252,11 @@ int while_statement()
 	}
 	sprintf(label_str, "LABEL_%d", label_ptr);
 	label_1 = label_ptr++;
+	quat_tmp_ptr = quat_ptr;//需要将label放到表达式前面
 	if (!condition_statement(label_str))
 	{
 		return 0;
 	}
-	quat_tmp_ptr = quat_ptr - 1;
 	if (sym != RPARENSYM)
 	{
 		error(ERROR_IN_WHILE);
@@ -1424,7 +1424,10 @@ int printf_statement()
 				return 0;
 			}
 			gen_op(op_1, i, type, 0, 0);
-			emit(WRITE, str, op_1, "");
+			if((type==2)|| (type == 0 && sym_table[i].value_type == 2))
+				emit(CWRITE, str, op_1, "");
+			else
+				emit(WRITE, str, op_1, "");
 		}
 		else if (sym == RPARENSYM) //仅字符串
 		{
@@ -1445,7 +1448,10 @@ int printf_statement()
 			return 0;
 		}
 		gen_op(op_1, i, type, 0, 0);
-		emit(WRITE, "", op_1, "");
+		if ((type == 2) || (type == 0 && sym_table[i].value_type == 2))
+			emit(CWRITE, "", op_1, "");
+		else
+			emit(WRITE, "", op_1, "");
 	}
 	if (sym != RPARENSYM)
 	{
@@ -2750,6 +2756,7 @@ void gen_text()//生成代码主函数
 				case CJNE:gen_j(); break;
 				case RET:gen_ret(); break;
 				case WRITE:gen_write(); break;
+				case CWRITE:gen_write(); break;
 				case READ:gen_read(); break;
 				case CREAD:gen_read(); break;
 				case PARA:gen_para(); break;
@@ -2952,7 +2959,10 @@ void gen_write()
 	if (strcmp(quat_table[gen_mips_ptr].op2, ""))//如果变量部分非空
 	{
 		handle_op("", quat_table[gen_mips_ptr].op2);
-		fprintf(mips, "\tli  $v0, 1\n");//置v0为打印整数
+		if(quat_table[gen_mips_ptr].op== CWRITE)
+			fprintf(mips, "\tli  $v0, 11\n");//置v0为打印字符
+		else
+			fprintf(mips, "\tli  $v0, 1\n");//置v0为打印整数
 		fprintf(mips, "\tadd  $a0, $s1, $0\n");//置a0为整数值
 		fprintf(mips, "\tsyscall\n");
 	}
