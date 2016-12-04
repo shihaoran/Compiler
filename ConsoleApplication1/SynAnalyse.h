@@ -183,6 +183,7 @@ int has_return;//是否有return语句
 extern int num;//词法分析中生成的数字
 extern char c;//词法分析中生成的字符
 int num_sign;//加入了符号后的数字
+int error_cnt = 0;//记录生成四元式过程错误数量
 			
 /*===================END=================*/
 #endif

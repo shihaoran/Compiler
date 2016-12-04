@@ -160,6 +160,24 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 		return 4;
 	}
 }
+void handle_error(int *type)//Ìø¶Áº¯ÊýtypeÎªÌø¶Á½áÊø·ûºÅ¼¯
+{
+	int flag = 1,i;
+	int len = (sizeof(type) / sizeof(flag))-1;
+	do
+	{
+		for (i = 0; i < len; i++)
+		{
+			if (type[i] == sym)
+			{
+				flag = 0;
+				break;
+			}
+		}
+		if(flag)
+			sym = getsym();
+	} while (flag);
+}
 
 /*======================END=========================*/
 
@@ -188,7 +206,12 @@ int const_defination()//³£Á¿¶¨Òå
 			return 0;
 		}
 		sym = getsym();
-		integer();
+		if (!integer())
+		{
+			int endsym[] = { SEMICOLONSYM ,COMMASYM};
+			handle_error(endsym);
+			error_cnt++;
+		}
 		add_sym(id, TYPE_CONST, TYPE_VALUE_INT, num_sign, 0, NULL);
 		sprintf(temp_str, "%d", num_sign);
 		if(in_func)
@@ -216,7 +239,12 @@ int const_defination()//³£Á¿¶¨Òå
 				return 0;
 			}
 			sym = getsym();
-			integer();
+			if (!integer())
+			{
+				int endsym[] = { SEMICOLONSYM ,COMMASYM };
+				handle_error(endsym);
+				error_cnt++;
+			}
 			add_sym(id, TYPE_CONST, TYPE_VALUE_INT, num_sign, 0, NULL);
 			sprintf(temp_str, "%d", num_sign);
 			if (in_func)
@@ -308,10 +336,15 @@ int const_declaration()
 	while (sym == CONSTSYM)
 	{
 		sym = getsym();
-		const_defination();
+		if (!const_defination())//½øÐÐ³ö´í´¦Àí
+		{
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
+		}
 		if (sym != SEMICOLONSYM)
 		{
-			error(MISSING_SEMICOLON);//TODO:ÍË³ö
+			error(MISSING_SEMICOLON);
 			return 0;
 		}
 		else sym = getsym();
@@ -389,7 +422,9 @@ int var_defination()
 	}
 	if (!var_defination_backend(head_type))
 	{
-		return 0;
+		int endsym[] = { SEMICOLONSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	return 1;
 }
@@ -482,7 +517,13 @@ int var_declaration()
 {
 	while (sym == INTSYM||sym==CHARSYM)
 	{
-		var_defination();
+		if (!var_defination())
+		{
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
+			return 1;
+		}
 		if (sym != SEMICOLONSYM)
 		{
 			error(MISSING_SEMICOLON);//TODO:ÍË³ö
@@ -613,8 +654,10 @@ int value_parameter_table(int i)
 		j = expression(&type);
 		if (type == 4 && j == -1)
 		{
+			int endsym[] = { COMMASYM,RPARENSYM };
+			handle_error(endsym);
+			error_cnt++;
 			error(ERROR_PARAMETER);
-			return 0;
 		}
 		if ((type == 0 && sym_table[j].value_type == sym_table[now_ptr].value_type) ||
 			((type == 1 || type == 2) && type == sym_table[now_ptr].value_type))
@@ -639,8 +682,10 @@ int value_parameter_table(int i)
 			j = expression(&type);
 			if (type == 4 && j == -1)
 			{
+				int endsym[] = { COMMASYM,RPARENSYM };
+				handle_error(endsym);
+				error_cnt++;
 				error(ERROR_PARAMETER);
-				return 0;
 			}
 			if ((type == 0 && sym_table[j].value_type == sym_table[now_ptr].value_type) ||
 				((type == 1 || type == 2) && type == sym_table[now_ptr].value_type))
@@ -750,7 +795,6 @@ int void_func_defination()
 	if (position >= 0)
 	{
 		error(DUPLICATE_DEFINE_IDENTIFIER);
-		return 0;
 	}
 	add_sym(id, TYPE_FUNC, TYPE_VALUE_INIT, 0, 0, NULL);
 	func_id_i = sym_ptr - 1;
@@ -760,39 +804,47 @@ int void_func_defination()
 	if (sym != LPARENSYM)
 	{
 		error(ERROR_PARAMETER);
-		return 0;
 	}
 	sym = getsym();
 	if (!parameter_table())
 	{
-		return 0;
+		int endsym[]= {RPARENSYM};
+		handle_error(endsym);
+		error_cnt++;
 	}
 	if(sym!=RPARENSYM)
 	{
 		error(ERROR_PARAMETER);
-		return 0;
+		int endsym[]= { RPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	printf("Line:%d --This is a void_function_defination_statement!\n", line + 1);
 	sym = getsym();
 	if (sym != LBPARENSYM)
 	{
 		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
-		return 0;
+		int endsym[]= { LBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	sym = getsym();
 	if (!compound_statement())
 	{
-		return 0;
+		int endsym[] = { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	if (has_return)
 	{
 		error(NRETURN_FUNC_CANT_RETURN);
-		return 0;
 	}
 	if (sym != RBPARENSYM)
 	{
 		error(BRACE_DISMATCH);
-		return 0;
+		int endsym[]= { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	sym = getsym();
 	in_func = 0;
@@ -814,7 +866,6 @@ int return_func_defination(int head_type)
 	if (!has_return)
 	{
 		error(RUTURN_FUNC_MUST_RETURN);
-		return 0;
 	}
 	return 1;
 }
@@ -828,38 +879,49 @@ int return_func_defination_backend(int head_type)
 	if (sym != LPARENSYM)
 	{
 		error(ERROR_PARAMETER);
-		return 0;
 	}
 	position = search_sym(id);
 	if (position >= 0 )
 	{
 		error(DUPLICATE_DEFINE_IDENTIFIER);
-		return 0;
 	}
 	add_sym(id, TYPE_FUNC, head_type, 0, 0, NULL);
 	func_id_i = sym_ptr - 1;
 	emit(FUNC, id, "", "");
 	para_ptr = sym_ptr;
 	sym = getsym();
-	parameter_table();
+	if (!parameter_table())
+	{
+		int endsym[] = { RPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
+	}
 	if (sym != RPARENSYM)
 	{
 		error(ERROR_PARAMETER);
-		return 0;
+		int endsym[] = { RPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	printf("Line:%d --This is a return_function_defination_statement!\n", line + 1);
 	sym = getsym();
 	if (sym != LBPARENSYM)
 	{
 		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
-		return 0;
 	}
 	sym = getsym();
-	compound_statement();
+	if (!compound_statement())
+	{
+		int endsym[] = { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
+	}
 	if(sym!=RBPARENSYM)
 	{
 		error(BRACE_DISMATCH);
-		return 0;
+		int endsym[] = { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	sym = getsym();
 	in_func = 0;
@@ -880,13 +942,14 @@ int main_func()//Ö÷º¯Êý,void mainÇ°ÃæÅÐ¶Ï¹ýÁË
 	if (sym != LPARENSYM)
 	{
 		error(WRONG_HEAD);
-		return 0;
 	}
 	sym = getsym();
 	if (sym != RPARENSYM)
 	{
 		error(WRONG_HEAD);
-		return 0;
+		int endsym[] = { RPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	para_ptr = sym_ptr;//ÖÃ²ÎÊýÆðÊ¼Î»ÖÃ
 	printf("Line:%d --This is a main_function_defination_statement!\n", line + 1);
@@ -894,19 +957,24 @@ int main_func()//Ö÷º¯Êý,void mainÇ°ÃæÅÐ¶Ï¹ýÁË
 	if (sym != LBPARENSYM)
 	{
 		error(MISSING_STRUCTURER_IN_FUNC_DEFINE);
-		return 0;
 	}	
 	sym = getsym();
-	compound_statement();
+	if (!compound_statement())
+	{
+		int endsym[] = { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
+	}
 	if (has_return)
 	{
 		error(NRETURN_FUNC_CANT_RETURN);
-		return 0;
 	}
 	if (sym != RBPARENSYM)
 	{
 		error(BRACE_DISMATCH);
-		return 0;
+		int endsym[] = { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	sym = getsym();
 	in_func = 0;
@@ -918,11 +986,23 @@ int compound_statement()//¸´ºÏÓï¾ä
 	local_ptr = sym_ptr;
 	if (sym == CONSTSYM)
 	{
-		const_declaration();
+		if (!const_declaration())
+		{
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
+			sym = getsym();
+		}
 	}
 	if (sym == INTSYM || sym == CHARSYM)
 	{
-		var_declaration();
+		if (!var_declaration())
+		{
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
+			sym = getsym();
+		}
 	}
 	tmp_ptr = sym_ptr;
 	if (sym == RBPARENSYM)
@@ -939,7 +1019,9 @@ int compound_statement()//¸´ºÏÓï¾ä
 	if (sym != RBPARENSYM)
 	{
 		error(WRONG_STATEMENT);
-		return 0;
+		int endsym[] = { RBPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	emit(NOP, "", "", "");//¼Ó¼¸¸önop·ÀÖ¹label±»³åµô
 	return 1;
@@ -1049,7 +1131,9 @@ int statement()
 		if (sym != RBPARENSYM)
 		{
 			error(BRACE_DISMATCH);
-			return 0;
+			int endsym[] = { RBPARENSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		printf("Line:%d --This is a statement list!\n", line+1);
 		sym = getsym();
@@ -1063,7 +1147,6 @@ int statement()
 		if (i < 0)
 		{
 			error(UNDEFINE_IDENTIFIER);
-			return 0;
 		}
 		//º¯Êýµ÷ÓÃÓï¾ä
 		if (sym == LPARENSYM)
@@ -1072,12 +1155,16 @@ int statement()
 			type=call_func(i);
 			if (type==4)
 			{
-				return 0;
+				int endsym[] = { SEMICOLONSYM };
+				handle_error(endsym);
+				error_cnt++;
 			}
 			if (sym != SEMICOLONSYM)
 			{
 				error(MISSING_SEMICOLON);
-				return 0;
+				int endsym[] = { SEMICOLONSYM };
+				handle_error(endsym);
+				error_cnt++;
 			}
 			printf("Line:%d --This is a function_call_statement!\n", line+1);
 		}
@@ -1085,13 +1172,17 @@ int statement()
 		{
 			if(!assign_statement(i))
 			{
-				return 0;
+				int endsym[] = { SEMICOLONSYM };
+				handle_error(endsym);
+				error_cnt++;
 			}
 		}
 		else
 		{
 			error(ERROR_IN_STATEMENT);
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		sym = getsym();
 		return 1;
@@ -1100,12 +1191,16 @@ int statement()
 	{
 		if (!scanf_statement())
 		{
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		if (sym != SEMICOLONSYM)
 		{
 			error(MISSING_SEMICOLON);
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		printf("Line:%d --This is a scanf_statement!\n", line+1);
 		sym = getsym();
@@ -1115,12 +1210,16 @@ int statement()
 	{
 		if (!printf_statement())
 		{
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		if (sym != SEMICOLONSYM)
 		{
 			error(MISSING_SEMICOLON);
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		printf("Line:%d --This is a printf_statement!\n", line+1);
 		sym = getsym();
@@ -1139,12 +1238,16 @@ int statement()
 	{
 		if (!return_statement())
 		{
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		if (sym != SEMICOLONSYM)
 		{
 			error(MISSING_SEMICOLON);
-			return 0;
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		printf("Line:%d --This is a return_statement!\n", line+1);
 		sym = getsym();
@@ -1288,7 +1391,9 @@ int condition_statement(char *label)//ÔÚÆäÖÐÉú³ÉÌõ¼þÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 	i = expression(&type);
 	if (i == -1 && type == 4)
 	{
-		return 0;
+		int endsym[] = { BIGTHSYM,SMALLTHSYM,NOTBTHSYM,NOTSTHSYM,EQLSYM,NOTESYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	gen_op(op_1, i, type, 0, 0);
 	if (sym == BIGTHSYM||sym == SMALLTHSYM||
@@ -1300,7 +1405,9 @@ int condition_statement(char *label)//ÔÚÆäÖÐÉú³ÉÌõ¼þÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 		i = expression(&type);
 		if (i == -1 && type == 4)
 		{
-			return 0;
+			int endsym[] = { RPARENSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		gen_op(op_2, i, type, 0, 0);
 		switch (temp_op)
@@ -1420,8 +1527,10 @@ int printf_statement()
 			i = expression(&type);
 			if (i == -1 && type == 4)
 			{
+				int endsym[] = { RPARENSYM };
+				handle_error(endsym);
+				error_cnt++;
 				error(ERROR_IN_PRINTF);//ÏëÏëÊÇ²»ÊÇÒª±£Áô
-				return 0;
 			}
 			gen_op(op_1, i, type, 0, 0);
 			if((type==2)|| (type == 0 && sym_table[i].value_type == 2))
@@ -1444,8 +1553,10 @@ int printf_statement()
 		i = expression(&type);
 		if (i == -1 && type == 4)
 		{
+			int endsym[] = { RPARENSYM };
+			handle_error(endsym);
+			error_cnt++;
 			error(ERROR_IN_PRINTF);//ÏëÏëÊÇ²»ÊÇÒª±£Áô
-			return 0;
 		}
 		gen_op(op_1, i, type, 0, 0);
 		if ((type == 2) || (type == 0 && sym_table[i].value_type == 2))
@@ -1483,7 +1594,9 @@ int switch_statement()
 	i = expression(&type);
 	if (i == -1 && type == 4)
 	{
-		return 0;
+		int endsym[] = { RPARENSYM };
+		handle_error(endsym);
+		error_cnt++;
 	}
 	gen_op(op_1, i, type, 0, 0);
 	if (sym != RPARENSYM)
@@ -1650,7 +1763,9 @@ int return_statement()
 		i = expression(&type);
 		if (i==-1&&type==4)
 		{
-			return 0;
+			int endsym[] = { RPARENSYM };
+			handle_error(endsym);
+			error_cnt++;
 		}
 		gen_op(op_1,i,type,0,0);
 		emit(RET, op_1, "", "");
@@ -1914,7 +2029,13 @@ int program()
 	sym = getsym();
 	if (sym == CONSTSYM)//³£Á¿ËµÃ÷
 	{
-		const_declaration();
+		if (!const_declaration())
+		{
+			int endsym[] = { SEMICOLONSYM };
+			handle_error(endsym);
+			error_cnt++;
+			sym = getsym();
+		}
 	}
 	while (sym == INTSYM || sym == CHARSYM || sym == VOIDSYM)//TODO:ÐèÒªÑ­»·
 	{
@@ -1929,20 +2050,32 @@ int program()
 			if (sym == MAINSYM)
 			{
 				sym = getsym();
-				main_func();//´Ó(¿ªÊ¼½øÈë
+				if (!main_func())//´Ó(¿ªÊ¼½øÈë
+				{
+					int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+					handle_error(endsym);
+					error_cnt++;
+				}
 				main_cnt++;//²»ÍË³ö¼ÌÐø
 				continue;
 			}
 			else if (sym == IDSYM)
 			{
-				void_func_defination();//´Ó±êÊ¶·û¿ªÊ¼½øÈë
+				if (!void_func_defination())//´Ó±êÊ¶·û¿ªÊ¼½øÈë
+				{
+					int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+					handle_error(endsym);
+					error_cnt++;
+				}
 				var_flag = 1;
 				continue;
 			}
 			else
 			{
 				error(WRONG_HEAD);
-				return 0;
+				int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+				handle_error(endsym);
+				error_cnt++;
 			}
 		}
 		else//int char
@@ -1951,33 +2084,39 @@ int program()
 			if (head_type == 0)
 			{
 				error(WRONG_HEAD);
-				return 0;
+				int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+				handle_error(endsym);
+				error_cnt++;
 			}
 			position = search_sym(id);
 			if ((position >= para_ptr&&in_func) || (position >= 0 && !in_func))
 			{
 				error(DUPLICATE_DEFINE_IDENTIFIER);
-				return 0;
 			}
 			if (sym == LMPARENSYM)//Êý×é
 			{
 				if (var_flag == 1)
 				{
 					error(VAR_DECLARATION_AFTER_FUNC);
-					return 0;
 				}
 				sym = getsym();
 				if (sym != NUMSYM)
 				{
 					error(ARRAY_SUBVALUE_SHOULD_BE_INTEGER);
-					return 0;
+					int endsym[] = { SEMICOLONSYM,RMPARENSYM,COMMASYM };
+					handle_error(endsym);
+					error_cnt++;
+					goto A;
 				}
 				sprintf(temp_str, "%d", num);
 				sym = getsym();
 				if (sym != RMPARENSYM)
 				{
 					error(PARENT_DISMATCH);
-					return 0;
+					int endsym[] = { SEMICOLONSYM,RMPARENSYM,COMMASYM };
+					handle_error(endsym);
+					error_cnt++;
+					goto A;
 				}
 				if (head_type == 1)
 				{
@@ -1996,6 +2135,7 @@ int program()
 						emit(VAR, "CHAR", id, temp_str);
 				}
 				sym = getsym();
+				A://Ìøµ½´Ë´¦ÎªÁËÉÙ·ÀÖ¹¶à¶ÁÒ»¸ö·ûºÅ
 				if (sym == SEMICOLONSYM)
 				{
 					sym = getsym();
@@ -2003,13 +2143,24 @@ int program()
 				}
 				else if (sym == COMMASYM)
 				{
-					var_defination_backend(head_type);//ËµÃ÷Ò»ÐÐÓÐ¶à¸ö¶¨Òå
+					if (!var_defination_backend(head_type))//ËµÃ÷Ò»ÐÐÓÐ¶à¸ö¶¨Òå
+					{
+						int endsym[] = { SEMICOLONSYM };
+						handle_error(endsym);
+						error_cnt++;
+					}
 					if (sym == SEMICOLONSYM)
 					{
 						//TODO£ºÕâÀï´òÓ¡
 						sym = getsym();
 						continue;
 					}
+				}
+				else
+				{
+					int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+					handle_error(endsym);
+					error_cnt++;
 				}
 			}
 			else if (sym == COMMASYM)//±äÁ¿¶¨Òåºó²¿
@@ -2035,12 +2186,23 @@ int program()
 					else
 						emit(VAR, "CHAR", id, "");
 				}
-				var_defination_backend(head_type);//ËµÃ÷Ò»ÐÐÓÐ¶à¸ö¶¨Òå
+				if (!var_defination_backend(head_type))//ËµÃ÷Ò»ÐÐÓÐ¶à¸ö¶¨Òå
+				{
+					int endsym[] = { SEMICOLONSYM };
+					handle_error(endsym);
+					error_cnt++;
+				}
 				if (sym == SEMICOLONSYM)
 				{
 					//TODO£ºÕâÀï´òÓ¡
 					sym = getsym();
 					continue;
+				}
+				else
+				{
+					int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+					handle_error(endsym);
+					error_cnt++;
 				}
 			}
 			else if (sym == SEMICOLONSYM)
@@ -2078,7 +2240,9 @@ int program()
 			else
 			{
 				error(MISSING_SEMICOLON);
-				return 0;
+				int endsym[] = { INTSYM,CHARSYM,VOIDSYM };
+				handle_error(endsym);
+				error_cnt++;
 			}
 		}
 	}
@@ -3022,7 +3186,10 @@ int main()
 	int result,i=0;
 	init();
 	program();
-	print_quat();
-	gen_mips();
+	if (!error_cnt)
+	{
+		print_quat();
+		gen_mips();
+	}
 	scanf("%d", &result);
 }
