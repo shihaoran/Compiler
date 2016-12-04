@@ -3,6 +3,17 @@
 #ifndef SYNANALYSE_H
 #define SYNANALYSE_H
 
+/*=================四元式生成部分=====================*/
+int search_sym(char *name);
+void emit(int op, char* op1, char* op2, char* opr);
+void add_sym(char *name, int type, int value_type, int int_v, char char_v, char* str_v);
+int add_tmp(char *name, int type);
+int gen_op(char *name, int i, int type, int array_i, int array_i_type);
+void handle_error(int *type);
+void print_quat();
+/*======================END==========================*/
+
+/*===================递归分析部分=====================*/
 int const_defination();
 int const_declaration();
 int var_defination();
@@ -10,28 +21,32 @@ int var_defination_backend(int head_type);
 int var_declaration();
 int integer();
 int head();
-int value_parameter_table();
+int call_func(int i);
+int value_parameter_table(int i);
 int parameter_table();
 int void_func_defination();
 int return_func_defination(int head_type);
 int return_func_defination_backend(int head_type);
 int main_func();
 int compound_statement();
+int assign_statement(int i);
 int statement();
 int if_statement();
 int while_statement();
-int condition_statement();
+int condition_statement(char *label);
 int scanf_statement();
 int printf_statement();
 int switch_statement();
-int switch_table();
-int default_statement();
+int switch_table(int i, char *op_1);
+int default_statement(int i);
 int return_statement();
-int expression();
-int item();
-int factor();
+int expression(int *type);
+int item(int *type, int *array_i, int *array_i_type);
+int factor(int *type, int *array_i, int *array_i_type);
 int program();
-void print_quat();
+/*======================END==========================*/
+
+/*=================MIPS代码生成部分===================*/
 void gen_mips();
 void gen_data();
 void gen_text();
@@ -51,7 +66,7 @@ void gen_call();
 void gen_nop();
 int save_result(char *opr);
 int handle_op(char *op1, char *op2);
-
+/*======================END==========================*/
 
 #define MAX_ID_LEN 128 //标识符最长值
 #define MAX_STR_LEN 128 //字符串最长值
