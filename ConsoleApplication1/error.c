@@ -72,10 +72,16 @@ int error(int errortype)
 		printf("wrong statement"); break;
 	case MISSING_SEMICOLON:
 		printf("miss semicolon"); break;
+	case MISSING_BRACE:
+		printf("miss brace"); break;
+	case MISSING_BRACKET:
+		printf("miss bracket"); break;
+	case MISSING_CASE_LABEL:
+		printf("miss case label"); break;
+	case MISSING_COLON:
+		printf("miss colon"); break;
 	case ERROR_PARAMETER:
 		printf("error parameter"); break;
-	case BRACE_DISMATCH:
-		printf("brace dismatch"); break;
 	case ERROR_IN_IF:
 		printf("error in if"); break;
 	case ERROR_IN_WHILE:
@@ -112,6 +118,14 @@ int error(int errortype)
 		printf("void fuction can't have a return value"); break;
 	case ASSIGN_ERROR:
 		printf("assign error"); break;
+	case ASSIGN_TYPE_ERROR:
+		printf("can't assign value to a non-assignable object"); break;
+	case MISSING_PARAMETER:
+		printf("missing parameter in function call"); break;
+	case UNDEFINE_PARAMETER:
+		printf("redundant parameter in function call"); break;
+	case DISMATCH_PARAMETER:
+		printf("parameter type dismatch in function call"); break;
 	case ASSIGN_DISMATCH:
 		printf("dismatch type between assign statement"); break;
 	case UNDEFINE_ERROR:
