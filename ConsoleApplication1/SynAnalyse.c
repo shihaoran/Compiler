@@ -163,7 +163,7 @@ int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ
 void handle_error(int *type)//Ìø¶Áº¯ÊıtypeÎªÌø¶Á½áÊø·ûºÅ¼¯
 {
 	int flag = 1,i;
-	int len = (sizeof(type) / sizeof(flag))-1;
+	int len = (sizeof(type) / sizeof(flag));
 	do
 	{
 		for (i = 0; i < len; i++)
@@ -3190,6 +3190,12 @@ int main()
 	{
 		print_quat();
 		gen_mips();
+		printf("\nCompile Completed!\n");
+	}
+	else
+	{
+		printf("Error count:%d\n", error_cnt);
+		printf("Compile Failed!\n");
 	}
 	scanf("%d", &result);
 }

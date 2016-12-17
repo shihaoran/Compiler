@@ -100,6 +100,10 @@ int error(int errortype)
 		printf("error in default"); break;
 	case ERROR_IN_RETURN:
 		printf("error in return"); break;
+	case ERROR_IN_EXPRESSION:
+		printf("error in expression"); break;
+	case ERROR_CONDITION:
+		printf("error in condition"); break;
 	case DUPLICATE_DEFINE_IDENTIFIER:
 		printf("duplicate define identifier"); break;
 	case UNDEFINE_IDENTIFIER:
