@@ -75,6 +75,9 @@ int handle_op(char *op1, char *op2);
 #define MAX_OP_LEN 32 //操作数最长值
 #define MAX_PARA_LEN 32 //参数最长值
 #define MAX_QUAT_LEN 1024 //四元式组最长值
+#define MAX_CONST_LEN 512 //用于优化的常量表最长值
+#define MAX_FUNC_LEN 128 //用于优化的函数数量最长值
+#define MAX_BLOCK_LEN 128 //用于优化的基本块最长值
 
 /*=================生成四元式部分===================*/
 
@@ -176,10 +179,26 @@ struct quat_record
 	char op1[MAX_OP_LEN];
 	char op2[MAX_OP_LEN];
 	char opr[MAX_OP_LEN];
-} quat_table[MAX_QUAT_LEN];
+	int is_empty;
+} quat_table[MAX_QUAT_LEN],optquat_table[MAX_QUAT_LEN];
 
 /********定义字符串常量数组*******/
 char str_table[MAX_STR_TAB_LEN][MAX_STR_LEN];
+
+/********定义常量表数据结构*******/
+struct const_record
+{
+	char name[MAX_OP_LEN];//常量名
+	/*
+	0 init
+	1 int
+	2 char
+	*/
+	int type;
+	int value;
+	int is_valid;
+	int quat_ptr;//对应第一次定义的四元式表位置，用于删除赋常数值的临时变量
+} const_table[MAX_CONST_LEN];
 
 /********定义各种指针*******/
 int sym_ptr = 0;//当前符号表尽头指针
@@ -188,8 +207,14 @@ int local_ptr = 0;//函数调用局部变量起始位置
 int tmp_ptr = 0;//函数调用临时变量起始位置
 int tmp_cnt = 0;//临时变量计数，全局使用为了优化方便
 int quat_ptr = 0;//四元式指针
+int optquat_ptr = 0;//当前优化四元式遍历指针
+int optquat_len = 0;//当前优化四元式栈顶指针
 int str_ptr = 0;//字符串常量指针
 int label_ptr = 0;//当前label指针
+int c_local_ptr = 0;//常量表局部常量起始位置
+int c_var_ptr = 0;//常量表变量起始位置
+int c_ptr = 0;//常量表顶指针
+int func_ptr = 0;//函数指针
 
 
 /********一些全局变量*******/
@@ -199,7 +224,11 @@ extern int num;//词法分析中生成的数字
 extern char c;//词法分析中生成的字符
 int num_sign;//加入了符号后的数字
 int error_cnt = 0;//记录生成四元式过程错误数量
+int block[MAX_FUNC_LEN][MAX_BLOCK_LEN];//基本块表，值为基本块开始处四元式位置
 			
 /*===================END=================*/
+
+
+
 #endif
 

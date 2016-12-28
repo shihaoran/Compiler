@@ -33,8 +33,11 @@ void emit(int op, char* op1, char* op2, char* opr)//生成四元式，加入四元式数组中
 	int i;
 	if (quat_ptr == 0)
 	{
-		for(i=0;i<MAX_QUAT_LEN;i++)
+		for (i = 0; i < MAX_QUAT_LEN; i++)
+		{
 			quat_table[i].label = -1;
+			quat_table[i].is_empty = 0;
+		}
 	}
 	quat_table[quat_ptr].op = op;
 	strcpy(quat_table[quat_ptr].op1, op1);
@@ -3181,6 +3184,273 @@ void gen_nop()
 {
 	fprintf(mips, "\tnop\n");
 }
+
+/********常数传播优化部分*******/
+void copy_quat()
+{
+	int i;
+	for (i = 0; i < quat_ptr; i++)
+		optquat_table[i] = quat_table[i];
+	optquat_len = quat_ptr;
+}
+
+void gen_block()
+{
+	int i;
+	for (i = 0; i < optquat_len; i++)
+	{
+		if (optquat_table[i].op == FUNC || quat_table[i].op == MAINFUNC)
+			break;
+	}
+	while ((optquat_table[i].op == FUNC || quat_table[i].op == MAINFUNC) && i < optquat_len)
+	{
+		i = i + 1;
+		i = div_func(i);
+	}
+}
+
+int div_func(int i)
+{
+	int blk_ptr = 0;//基本块指针
+	int j, k;
+	int temp;
+	char *label;
+	while (optquat_table[i].op == CONST || optquat_table[i].op == VAR)
+	{
+		i++;
+	}
+	block[func_ptr][blk_ptr] = i;
+	blk_ptr++;
+	while (optquat_table[i].op != EOFUNC && optquat_table[i].op != EOMAINFUNC)
+	{
+		if (optquat_table[i].op == JZ || optquat_table[i].op == JNZ ||
+			optquat_table[i].op == JL || optquat_table[i].op == JLE ||
+			optquat_table[i].op == JG || optquat_table[i].op == JGE ||
+			optquat_table[i].op == JE || optquat_table[i].op == JNE || optquat_table[i].op == CJNE ||
+			optquat_table[i].op == JMP || optquat_table[i].op == RET)
+		{
+			//跳转或返回指令后一句应分块
+			if (optquat_table[i + 1].op != EOFUNC && optquat_table[i + 1].op != EOMAINFUNC) 
+			{
+				for (k = 0; k < blk_ptr; k++)  //遍历看是否已经分块
+					if (block[func_ptr][k] == i + 1)
+						break;
+				if (k == blk_ptr)//没有找到
+				{
+					block[func_ptr][blk_ptr] = i + 1;
+					blk_ptr++;
+				}
+			}
+			if (optquat_table[i].op != RET)
+			{
+				for (j = 0; j < optquat_ptr; j++)    //寻找跳转到的语句
+				{
+					sprintf(label, "LABEL_%d", optquat_table[j].label);
+					if (!strcmp(optquat_table[i].opr, label))//找到了
+					{
+						for (k = 0; k < blk_ptr; k++)  //是否已经存在
+							if (block[func_ptr][k] == j)
+								break;
+						if (k == blk_ptr)//没有找到
+						{
+							block[func_ptr][blk_ptr] = j;
+							blk_ptr++;
+						}
+						break;
+					}
+				}
+			}
+		}
+		i++;
+	}
+	for (j = 0; j < blk_ptr; j++)  //这样生成的分块可能是乱序的，冒泡排序
+		for (k = blk_ptr - 1; k > j; k--)
+			if (block[func_ptr][k] < block[func_ptr][k - 1])
+			{
+				temp = block[func_ptr][k];
+				block[func_ptr][k] = block[func_ptr][k - 1];
+				block[func_ptr][k - 1] = temp;
+			}
+	block[func_ptr][blk_ptr] = i;//记录EO 位置
+	blk_ptr++;
+	block[func_ptr][blk_ptr] = -1;//用-1标记结束
+	func_ptr++;
+	i++;
+	return i;
+}
+void const_propagation()
+{
+	int i,j;
+	optquat_ptr = 0;
+	while (optquat_table[optquat_ptr].op == CONST)
+	{
+		insert_const_table(optquat_table[optquat_ptr].op1, optquat_table[optquat_ptr].op2, optquat_table[optquat_ptr].opr, optquat_ptr, 2);
+		optquat_ptr++;
+	}
+	while (optquat_table[optquat_ptr].op == VAR)
+	{
+		optquat_ptr++;
+	}
+	for (i = 0; i < func_ptr; i++)
+	{
+		while (optquat_table[optquat_ptr].op == CONST)
+		{
+			insert_const_table(optquat_table[optquat_ptr], optquat_ptr, 1);
+			optquat_ptr++;
+		}
+		while (optquat_ptr < block[i][0])
+		{
+			optquat_ptr++;
+		}
+		for (j = 0; block[i][j + 1] != -1; j++)
+		{
+			process_block(block[i][j], block[i][j + 1]);
+		}
+		optquat_ptr = block[i][j];
+	}
+}
+void process_block(int start, int end)
+{
+	int i;
+	for (i = start; i < end; i++)
+	{
+
+	}
+}
+
+
+int process_quat(struct quat_record *quat,int i,int t)//t为2表示是全局常数，1表示是局部常数，0表示是变量
+{
+	int flag1 = 0, flag2 = 0;//表示op1，op2是否是常数
+	int value1 = 0, value2 = 0;
+	if (isdigit(quat->op1))//是立即数
+	{
+		value1 = atoi(quat->op1);
+		flag1 = 1;
+	}
+	else if (quat->op1[0] == '&')//是数组
+	{
+		char temp_name[MAX_OP_LEN];
+		char temp_num[MAX_OP_LEN];
+		char temp_whole[MAX_OP_LEN];
+		int i;
+		int j = 0;
+		int value_index = 0;//数组下标值
+		int flag_index = 0;
+		for (i = 0; quat->op1[i] != '['; i++)
+		{
+			temp_name[i] = quat->op1[i];
+		}
+		for (i = i + 1; quat->op1[i] != ']'; i++)
+		{
+			temp_num[j++] = quat->op1[i];
+		}
+		if (const_find_value(temp_num, &value_index))
+		{
+			flag_index = 1;
+			sprintf(temp_num, "%d", value_index);
+		}
+		if (flag_index)
+		{
+			strcat(temp_whole, temp_name);
+			strcat(temp_whole, "[");
+			strcat(temp_whole, temp_num);
+			if (const_find_value(temp_whole, &value1))
+			{
+				char temp_str[MAX_OP_LEN];
+				sprintf(temp_str, "%d", value1);
+				strcpy(quat->op1, temp_str);
+				flag1 = 1;
+			}
+		}
+	}
+	else
+	{
+		if (const_find_value(quat->op1[0], &value1))
+		{
+			flag1 = 1;
+		}
+	}
+	if (isdigit(quat->op2[0]))//是立即数
+	{
+		value2 = atoi(quat->op2);
+		flag2 = 1;
+	}
+	else if (quat->op2[0] == '&')//是数组
+	{
+		char temp_name[MAX_OP_LEN];
+		char temp_num[MAX_OP_LEN];
+		char temp_whole[MAX_OP_LEN];
+		int i;
+		int j = 0;
+		int value_index = 0;//数组下标值
+		int flag_index = 0;
+		for (i = 0; quat->op2[i] != '['; i++)
+		{
+			temp_name[i] = quat->op2[i];
+		}
+		for (i = i + 1; quat->op2[i] != ']'; i++)
+		{
+			temp_num[j++] = quat->op2[i];
+		}
+		if (const_find_value(temp_num, &value_index))
+		{
+			flag_index = 1;
+			sprintf(temp_num, "%d", value_index);
+		}
+		if (flag_index)
+		{
+			strcat(temp_whole, temp_name);
+			strcat(temp_whole, "[");
+			strcat(temp_whole, temp_num);
+			if (const_find_value(temp_whole, &value2))
+			{
+				char temp_str[MAX_OP_LEN];
+				sprintf(temp_str, "%d", value2);
+				strcpy(quat->op2,temp_str);
+				flag2 = 1;
+			}
+		}
+	}
+	else
+	{
+		if (const_find_value(quat->op2[0], &value2))
+		{
+			flag2 = 1;
+		}
+	}
+	if (flag1&&flag2)
+	{
+		update_const_table();
+	}
+}
+
+int update_const_table()
+{
+
+}
+
+int const_find_value(char* op,int* value)//找常量值，1找到0没找到
+{
+	int i;
+	for (i = 0; i < c_ptr; i++)
+	{
+		if (const_table[i].is_valid)
+		{
+			if (!strcmp(const_table[i].name, op))
+			{
+				*value = const_table[i].value;
+				if (op[0] == '$')//为常数的临时变量的值被用了，删除生成临时变量的四元式
+				{
+					optquat_table[const_table[i].quat_ptr].is_empty = 1;
+				}
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 int main()
 {
 	int result,i=0;
