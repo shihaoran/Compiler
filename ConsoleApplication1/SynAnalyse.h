@@ -68,6 +68,20 @@ int save_result(char *opr);
 int handle_op(char *op1, char *op2);
 /*======================END==========================*/
 
+/*=================优化部分===================*/
+void quat_opt();
+void print_opt_quat();
+void copy_quat();
+void gen_block();
+int div_func(int i);
+void const_propagation();
+void process_block(int start, int end);
+int process_quat(struct quat_record *quat, int t);
+int invalid_const_table(char* op);
+int update_const_table(char* op, int type, int value, int value_type);
+int const_find_value(char* op, int* value, int* index);
+/*======================END==========================*/
+
 #define MAX_ID_LEN 128 //标识符最长值
 #define MAX_STR_LEN 128 //字符串最长值
 #define MAX_STR_TAB_LEN 512 //字符串数组最长值

@@ -9,6 +9,8 @@ extern char id[MAX_ID_LEN];//×îºó¶ÁÈëµÄ±êÊ¶·û
 extern char string[MAX_TOKEN_LEN];//×îºó¶ÁÈëµÄ×Ö·û´®
 /*======================END=========================*/
 FILE *mips;
+FILE *quat_out;
+FILE *quat;
 int gen_mips_ptr=0;
 int local_table[MAX_TAB_LEN];
 int local_offset = 0;//µ±Ç°Ïà¶Ô×ø±êÆ«ÒÆÁ¿
@@ -2262,11 +2264,15 @@ int program()
 
 void print_quat()
 {
+	quat = fopen("quat.txt", "w");
 	int i;
 	for (i = 0; i < quat_ptr; i++)
 	{
-		if (quat_table[i].label !=-1)
+		if (quat_table[i].label != -1)
+		{
 			printf("LABEL_%d\n", quat_table[i].label);
+			fprintf(quat,"LABEL_%d\n", quat_table[i].label);
+		}
 		/*if (quat_table[i].op == WRITE)
 		{
 			printf("op1    %s\n", quat_table[i].op1);
@@ -2275,7 +2281,9 @@ void print_quat()
 			printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 		}*/
 		printf("%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
+		fprintf(quat,"%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], quat_table[i].op1, quat_table[i].op2, quat_table[i].opr);
 	}
+	fclose(quat);
 }
 
 void gen_mips()
@@ -3184,8 +3192,47 @@ void gen_nop()
 {
 	fprintf(mips, "\tnop\n");
 }
+/*******ÓÅ»¯²¿·Ö*******/
+void quat_opt()
+{
+	int _is = 0;
+	printf("ÊÇ·ñÒª×öËÄÔªÊ½ÓÅ»¯£¿¡¾1ÊÇ/0·ñ¡¿");
+	scanf("%d",&_is);
+	if (_is)
+	{
+		quat_out = fopen("quat_opt.txt", "w");
+		copy_quat();
+		gen_block();
+	}
+	else
+	{
+		return;
+	}
+	printf("ÊÇ·ñÒª×ö³£Êý´«²¥ÓÅ»¯£¿¡¾1ÊÇ/0·ñ¡¿");
+	scanf("%d", &_is);
+	if (_is)
+	{
+		const_propagation();
+	}
+	print_opt_quat();
+	fclose(quat_out);
+}
 
+void print_opt_quat()
+{
+	int i;
+	for (i = 0; i < quat_ptr; i++)
+	{
+		if (!optquat_table[i].is_empty)
+		{
+			if (optquat_table[i].label != -1)
+				fprintf(quat_out,"LABEL_%d\n", optquat_table[i].label);
+			fprintf(quat_out, "%10s%10s%10s%10s\n", quat_op_name[quat_table[i].op], optquat_table[i].op1, optquat_table[i].op2, optquat_table[i].opr);
+		}
+	}
+}
 /********³£Êý´«²¥ÓÅ»¯²¿·Ö*******/
+
 void copy_quat()
 {
 	int i;
@@ -3284,7 +3331,7 @@ void const_propagation()
 	optquat_ptr = 0;
 	while (optquat_table[optquat_ptr].op == CONST)
 	{
-		insert_const_table(optquat_table[optquat_ptr].op1, optquat_table[optquat_ptr].op2, optquat_table[optquat_ptr].opr, optquat_ptr, 2);
+		process_quat(&optquat_table[optquat_ptr], 2);
 		optquat_ptr++;
 	}
 	while (optquat_table[optquat_ptr].op == VAR)
@@ -3298,7 +3345,7 @@ void const_propagation()
 		{
 			if (optquat_table[optquat_ptr].op == CONST)
 			{
-				insert_const_table(optquat_table[optquat_ptr], optquat_ptr, 1);
+				process_quat(&optquat_table[optquat_ptr], 1);
 			}
 			optquat_ptr++;
 		}
@@ -3316,6 +3363,7 @@ void process_block(int start, int end)
 	for (i = start; i < end; i++)
 	{
 		process_quat(&optquat_table[i], 0);
+		optquat_ptr++;
 	}
 	c_ptr = c_var_ptr;//´¦ÀíÍê¿éºóÉ¾³ý¿é¼¶±äÁ¿³£Á¿
 }
@@ -3326,15 +3374,15 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 	int flag1 = 0, flag2 = 0;//±íÊ¾op1£¬op2ÊÇ·ñÊÇ³£Êý
 	int value = 0, value1 = 0, value2 = 0;
 	int value_type = 0;
-	int* useless;
-	if (!strcmp(quat->op, "PARA") || !strcmp(quat->op, "CALL") ||
-		!strcmp(quat->op, "VAR") || !strcmp(quat->op, "JMP") ||
-		!strcmp(quat->op, "FUNC") || !strcmp(quat->op, "EOFUNC") ||
-		!strcmp(quat->op, "MAINFUNC") || !strcmp(quat->op, "EOMAINFUNC"))
+	int useless=0;
+	if (quat->op== PARA || quat->op == CALL ||
+		quat->op == VAR || quat->op == JMP ||
+		quat->op == FUNC || quat->op == EOFUNC ||
+		quat->op == MAINFUNC || quat->op == EOMAINFUNC)
 	{
 		return;//²»´¦Àí
 	}
-	else if (!strcmp(quat->op, "NOP"))
+	else if (quat->op == NOP)
 	{
 		if (quat->label == -1)//ËµÃ÷ÕâÊÇÎÞÓÃµÄNOP£¬É¾È¥
 		{
@@ -3374,7 +3422,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 		{
 			//Èç¹ûÎª¿Õ£¬Ê²Ã´¶¼²»×ö£¬²»ÖÃflag
 		}
-		else if (isdigit(quat->op1))//ÊÇÁ¢¼´Êý
+		else if (isdigit(quat->op1[0]))//ÊÇÁ¢¼´Êý
 		{
 			value1 = atoi(quat->op1);
 			flag1 = 1;
@@ -3396,7 +3444,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 			{
 				temp_num[j++] = quat->op1[i];
 			}
-			if (const_find_value(temp_num, &value_index,useless))
+			if (const_find_value(temp_num, &value_index,&useless))
 			{
 				flag_index = 1;
 				sprintf(temp_num, "%d", value_index);
@@ -3407,7 +3455,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 				strcat(temp_whole, "[");
 				strcat(temp_whole, temp_num);
 				strcat(temp_whole, "]");
-				if (const_find_value(temp_whole, &value1,useless))
+				if (const_find_value(temp_whole, &value1,&useless))
 				{
 					char temp_str[MAX_OP_LEN];
 					sprintf(temp_str, "%d", value1);
@@ -3418,8 +3466,11 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 		}
 		else//²ÎÊý£¬³£Á¿£¬ÁÙÊ±±äÁ¿»ò·ÇÊý×é¾Ö²¿±äÁ¿
 		{
-			if (const_find_value(quat->op1[0], &value1,useless))
+			if (const_find_value(quat->op1, &value1,&useless))
 			{
+				char temp_str[MAX_OP_LEN];
+				sprintf(temp_str, "%d", value1);
+				strcpy(quat->op1, temp_str);
 				flag1 = 1;
 			}
 		}
@@ -3445,7 +3496,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 			{
 				temp_num[j++] = quat->op2[i];
 			}
-			if (const_find_value(temp_num, &value_index,useless))
+			if (const_find_value(temp_num, &value_index,&useless))
 			{
 				flag_index = 1;
 				sprintf(temp_num, "%d", value_index);
@@ -3456,7 +3507,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 				strcat(temp_whole, "[");
 				strcat(temp_whole, temp_num);
 				strcat(temp_whole, "]");
-				if (const_find_value(temp_whole, &value2,useless))
+				if (const_find_value(temp_whole, &value2,&useless))
 				{
 					char temp_str[MAX_OP_LEN];
 					sprintf(temp_str, "%d", value2);
@@ -3467,8 +3518,11 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 		}
 		else//²ÎÊý£¬³£Á¿£¬ÁÙÊ±±äÁ¿»ò·ÇÊý×é¾Ö²¿±äÁ¿
 		{
-			if (const_find_value(quat->op2[0], &value2,useless))
+			if (const_find_value(quat->op2, &value2,&useless))
 			{
+				char temp_str[MAX_OP_LEN];
+				sprintf(temp_str, "%d", value2);
+				strcpy(quat->op2, temp_str);
 				flag2 = 1;
 			}
 		}
@@ -3477,32 +3531,32 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 		{
 			if (flag1&&flag2)
 			{
-				if (!strcmp(quat->op, "JE") || !strcmp(quat->op, "JNE") ||
-					!strcmp(quat->op, "JZ") || !strcmp(quat->op, "JNZ") ||
-					!strcmp(quat->op, "JG") || !strcmp(quat->op, "JGE") ||
-					!strcmp(quat->op, "JL") || !strcmp(quat->op, "JLE") || !strcmp(quat->op, "CJNE"))
+				if (quat->op == JE || quat->op == JNE ||
+					quat->op == JZ || quat->op == JNZ ||
+					quat->op == JG || quat->op == JGE ||
+					quat->op == JL || quat->op == JLE || quat->op == CJNE)
 				{
 					return;//TODO:ÕâÀï×öËÀ´úÂëÉ¾³ý
 				}
-				else if (!strcmp(quat->op, "ADD"))
+				else if (quat->op == ADD)
 				{
 					value = value1 + value2;
-					strcpy(quat->op, "MOV");
+					quat->op = MOV;
 				}
-				else if (!strcmp(quat->op, "SUB"))
+				else if (quat->op == SUB)
 				{
 					value = value1 - value2;
-					strcpy(quat->op, "MOV");
+					quat->op = MOV;
 				}
-				else if (!strcmp(quat->op, "MUL"))
+				else if (quat->op == MUL)
 				{
 					value = value1 * value2;
-					strcpy(quat->op, "MOV");
+					quat->op = MOV;
 				}
-				else if (!strcmp(quat->op, "DIV"))
+				else if (quat->op == DIV)
 				{
 					value =value1 / value2;
-					strcpy(quat->op, "MOV");
+					quat->op = MOV;
 				}
 				if (quat->opr[0] == '&')//ÊÇÊý×é
 				{
@@ -3521,7 +3575,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 					{
 						temp_num[j++] = quat->opr[i];
 					}
-					if (const_find_value(temp_num, &value_index, useless))
+					if (const_find_value(temp_num, &value_index, &useless))
 					{
 						flag_index = 1;
 						sprintf(temp_num, "%d", value_index);
@@ -3540,14 +3594,14 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊýËÄÔªÊ½£¬1±íÊ
 					update_const_table(quat->opr, 0, value, 0);
 				}
 			}
-			else if (flag1&& (!strcmp(quat->op, "NEG") || !strcmp(quat->op, "MOV")))//´¦ÀíNEG,MOV
+			else if (flag1&& (quat->op == NEG || quat->op == MOV))//´¦ÀíNEG,MOV
 			{
-				if (!strcmp(quat->op, "NEG"))
+				if (quat->op == NEG)
 				{
 					char temp[MAX_OP_LEN];
 					value = -value1;
 					sprintf(temp, "%d", value);
-					strcpy(quat->op, "MOV");
+					quat->op = MOV;
 					strcpy(quat->op1, temp);
 				}
 				else
@@ -3649,6 +3703,7 @@ int main()
 	if (!error_cnt)
 	{
 		print_quat();
+		quat_opt();
 		gen_mips();
 		printf("\nCompile Completed!\n");
 	}
