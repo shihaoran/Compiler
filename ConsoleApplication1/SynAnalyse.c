@@ -3271,7 +3271,7 @@ int div_func(int i)
 				block[func_ptr][k] = block[func_ptr][k - 1];
 				block[func_ptr][k - 1] = temp;
 			}
-	block[func_ptr][blk_ptr] = i;//记录EO 位置
+	block[func_ptr][blk_ptr] = i;//记录函数结束后下一条四元式位置
 	blk_ptr++;
 	block[func_ptr][blk_ptr] = -1;//用-1标记结束
 	func_ptr++;
@@ -3291,17 +3291,18 @@ void const_propagation()
 	{
 		optquat_ptr++;
 	}
+	c_local_ptr = c_ptr;//进入函数，置常量表指针
 	for (i = 0; i < func_ptr; i++)
 	{
-		while (optquat_table[optquat_ptr].op == CONST)
-		{
-			insert_const_table(optquat_table[optquat_ptr], optquat_ptr, 1);
-			optquat_ptr++;
-		}
 		while (optquat_ptr < block[i][0])
 		{
+			if (optquat_table[optquat_ptr].op == CONST)
+			{
+				insert_const_table(optquat_table[optquat_ptr], optquat_ptr, 1);
+			}
 			optquat_ptr++;
 		}
+		c_var_ptr = c_ptr;//进入块，置常量表指针
 		for (j = 0; block[i][j + 1] != -1; j++)
 		{
 			process_block(block[i][j], block[i][j + 1]);
@@ -3314,123 +3315,311 @@ void process_block(int start, int end)
 	int i;
 	for (i = start; i < end; i++)
 	{
-
+		process_quat(&optquat_table[i], 0);
 	}
+	c_ptr = c_var_ptr;//处理完块后删除块级变量常量
 }
 
 
-int process_quat(struct quat_record *quat,int i,int t)//t为2表示是全局常数，1表示是局部常数，0表示是变量
+int process_quat(struct quat_record *quat,int t)//t为2表示是全局常数四元式，1表示是局部常数四元式，0表示是其他
 {
 	int flag1 = 0, flag2 = 0;//表示op1，op2是否是常数
-	int value1 = 0, value2 = 0;
-	if (isdigit(quat->op1))//是立即数
+	int value = 0, value1 = 0, value2 = 0;
+	int value_type = 0;
+	int* useless;
+	if (!strcmp(quat->op, "PARA") || !strcmp(quat->op, "CALL") ||
+		!strcmp(quat->op, "VAR") || !strcmp(quat->op, "JMP") ||
+		!strcmp(quat->op, "FUNC") || !strcmp(quat->op, "EOFUNC") ||
+		!strcmp(quat->op, "MAINFUNC") || !strcmp(quat->op, "EOMAINFUNC"))
 	{
-		value1 = atoi(quat->op1);
-		flag1 = 1;
+		return;//不处理
 	}
-	else if (quat->op1[0] == '&')//是数组
+	else if (!strcmp(quat->op, "NOP"))
 	{
-		char temp_name[MAX_OP_LEN];
-		char temp_num[MAX_OP_LEN];
-		char temp_whole[MAX_OP_LEN];
-		int i;
-		int j = 0;
-		int value_index = 0;//数组下标值
-		int flag_index = 0;
-		for (i = 0; quat->op1[i] != '['; i++)
+		if (quat->label == -1)//说明这是无用的NOP，删去
 		{
-			temp_name[i] = quat->op1[i];
+			quat->is_empty = 1;
 		}
-		for (i = i + 1; quat->op1[i] != ']'; i++)
+		return;
+	}
+	if (t == 2)//全局常量
+	{
+		value = atoi(quat->opr);
+		if (!strcmp(quat->op1, "INT"))
 		{
-			temp_num[j++] = quat->op1[i];
+			value_type = 1;
 		}
-		if (const_find_value(temp_num, &value_index))
+		else
 		{
-			flag_index = 1;
-			sprintf(temp_num, "%d", value_index);
+			value_type = 0;
 		}
-		if (flag_index)
+		update_const_table(quat->op2, t, value, value_type);
+	}
+	else if (t == 1)//局部常量
+	{
+		value = atoi(quat->opr);
+		if (!strcmp(quat->op1, "INT"))
 		{
-			strcat(temp_whole, temp_name);
-			strcat(temp_whole, "[");
-			strcat(temp_whole, temp_num);
-			if (const_find_value(temp_whole, &value1))
+			value_type = 1;
+		}
+		else
+		{
+			value_type = 0;
+		}
+		update_const_table("", t, value, value_type);
+	}
+	else//变量
+	{
+		if (!strcmp("", quat->op1))
+		{
+			//如果为空，什么都不做，不置flag
+		}
+		else if (isdigit(quat->op1))//是立即数
+		{
+			value1 = atoi(quat->op1);
+			flag1 = 1;
+		}
+		else if (quat->op1[0] == '&')//是数组
+		{
+			char temp_name[MAX_OP_LEN];
+			char temp_num[MAX_OP_LEN];
+			char temp_whole[MAX_OP_LEN];
+			int i;
+			int j = 0;
+			int value_index = 0;//数组下标值
+			int flag_index = 0;
+			for (i = 0; quat->op1[i] != '['; i++)
 			{
-				char temp_str[MAX_OP_LEN];
-				sprintf(temp_str, "%d", value1);
-				strcpy(quat->op1, temp_str);
+				temp_name[i] = quat->op1[i];
+			}
+			for (i = i + 1; quat->op1[i] != ']'; i++)
+			{
+				temp_num[j++] = quat->op1[i];
+			}
+			if (const_find_value(temp_num, &value_index,useless))
+			{
+				flag_index = 1;
+				sprintf(temp_num, "%d", value_index);
+			}
+			if (flag_index)
+			{
+				strcat(temp_whole, temp_name);
+				strcat(temp_whole, "[");
+				strcat(temp_whole, temp_num);
+				strcat(temp_whole, "]");
+				if (const_find_value(temp_whole, &value1,useless))
+				{
+					char temp_str[MAX_OP_LEN];
+					sprintf(temp_str, "%d", value1);
+					strcpy(quat->op1, temp_str);
+					flag1 = 1;
+				}
+			}
+		}
+		else//参数，常量，临时变量或非数组局部变量
+		{
+			if (const_find_value(quat->op1[0], &value1,useless))
+			{
 				flag1 = 1;
 			}
 		}
-	}
-	else
-	{
-		if (const_find_value(quat->op1[0], &value1))
+		if (isdigit(quat->op2[0]))//是立即数
 		{
-			flag1 = 1;
+			value2 = atoi(quat->op2);
+			flag2 = 1;
 		}
-	}
-	if (isdigit(quat->op2[0]))//是立即数
-	{
-		value2 = atoi(quat->op2);
-		flag2 = 1;
-	}
-	else if (quat->op2[0] == '&')//是数组
-	{
-		char temp_name[MAX_OP_LEN];
-		char temp_num[MAX_OP_LEN];
-		char temp_whole[MAX_OP_LEN];
-		int i;
-		int j = 0;
-		int value_index = 0;//数组下标值
-		int flag_index = 0;
-		for (i = 0; quat->op2[i] != '['; i++)
+		else if (quat->op2[0] == '&')//是数组
 		{
-			temp_name[i] = quat->op2[i];
-		}
-		for (i = i + 1; quat->op2[i] != ']'; i++)
-		{
-			temp_num[j++] = quat->op2[i];
-		}
-		if (const_find_value(temp_num, &value_index))
-		{
-			flag_index = 1;
-			sprintf(temp_num, "%d", value_index);
-		}
-		if (flag_index)
-		{
-			strcat(temp_whole, temp_name);
-			strcat(temp_whole, "[");
-			strcat(temp_whole, temp_num);
-			if (const_find_value(temp_whole, &value2))
+			char temp_name[MAX_OP_LEN];
+			char temp_num[MAX_OP_LEN];
+			char temp_whole[MAX_OP_LEN];
+			int i;
+			int j = 0;
+			int value_index = 0;//数组下标值
+			int flag_index = 0;
+			for (i = 0; quat->op2[i] != '['; i++)
 			{
-				char temp_str[MAX_OP_LEN];
-				sprintf(temp_str, "%d", value2);
-				strcpy(quat->op2,temp_str);
+				temp_name[i] = quat->op2[i];
+			}
+			for (i = i + 1; quat->op2[i] != ']'; i++)
+			{
+				temp_num[j++] = quat->op2[i];
+			}
+			if (const_find_value(temp_num, &value_index,useless))
+			{
+				flag_index = 1;
+				sprintf(temp_num, "%d", value_index);
+			}
+			if (flag_index)
+			{
+				strcat(temp_whole, temp_name);
+				strcat(temp_whole, "[");
+				strcat(temp_whole, temp_num);
+				strcat(temp_whole, "]");
+				if (const_find_value(temp_whole, &value2,useless))
+				{
+					char temp_str[MAX_OP_LEN];
+					sprintf(temp_str, "%d", value2);
+					strcpy(quat->op2, temp_str);
+					flag2 = 1;
+				}
+			}
+		}
+		else//参数，常量，临时变量或非数组局部变量
+		{
+			if (const_find_value(quat->op2[0], &value2,useless))
+			{
 				flag2 = 1;
 			}
 		}
+		//处理opr
+		if (strcmp(quat->opr, ""))//存在opr
+		{
+			if (flag1&&flag2)
+			{
+				if (!strcmp(quat->op, "JE") || !strcmp(quat->op, "JNE") ||
+					!strcmp(quat->op, "JZ") || !strcmp(quat->op, "JNZ") ||
+					!strcmp(quat->op, "JG") || !strcmp(quat->op, "JGE") ||
+					!strcmp(quat->op, "JL") || !strcmp(quat->op, "JLE") || !strcmp(quat->op, "CJNE"))
+				{
+					return;//TODO:这里做死代码删除
+				}
+				else if (!strcmp(quat->op, "ADD"))
+				{
+					value = value1 + value2;
+					strcpy(quat->op, "MOV");
+				}
+				else if (!strcmp(quat->op, "SUB"))
+				{
+					value = value1 - value2;
+					strcpy(quat->op, "MOV");
+				}
+				else if (!strcmp(quat->op, "MUL"))
+				{
+					value = value1 * value2;
+					strcpy(quat->op, "MOV");
+				}
+				else if (!strcmp(quat->op, "DIV"))
+				{
+					value =value1 / value2;
+					strcpy(quat->op, "MOV");
+				}
+				if (quat->opr[0] == '&')//是数组
+				{
+					char temp_name[MAX_OP_LEN];
+					char temp_num[MAX_OP_LEN];
+					char temp_whole[MAX_OP_LEN];
+					int i;
+					int j = 0;
+					int value_index = 0;//数组下标值
+					int flag_index = 0;
+					for (i = 0; quat->opr[i] != '['; i++)
+					{
+						temp_name[i] = quat->opr[i];
+					}
+					for (i = i + 1; quat->opr[i] != ']'; i++)
+					{
+						temp_num[j++] = quat->opr[i];
+					}
+					if (const_find_value(temp_num, &value_index, useless))
+					{
+						flag_index = 1;
+						sprintf(temp_num, "%d", value_index);
+					}
+					if (flag_index)
+					{
+						strcat(temp_whole, temp_name);
+						strcat(temp_whole, "[");
+						strcat(temp_whole, temp_num);
+						strcat(temp_whole, "]");
+						update_const_table(temp_whole, 0, value, 0);
+					}
+				}
+				else
+				{
+					update_const_table(quat->opr, 0, value, 0);
+				}
+			}
+			else if (flag1&& (!strcmp(quat->op, "NEG") || !strcmp(quat->op, "MOV")))//处理NEG,MOV
+			{
+				if (!strcmp(quat->op, "NEG"))
+				{
+					char temp[MAX_OP_LEN];
+					value = -value1;
+					sprintf(temp, "%d", value);
+					strcpy(quat->op, "MOV");
+					strcpy(quat->op1, temp);
+				}
+				else
+				{
+					value = value1;
+				}
+				update_const_table(quat->opr, 0, value, 0);
+			}
+			else//这是应该删除，因为赋了非常数量
+			{
+				invalid_const_table(quat->opr);
+			}
+		}
+	}
+}
+int invalid_const_table(char* op)
+{
+	int v, index;
+	if (const_find_value(op, &v, &index))//找到了
+	{
+		strcpy(const_table[index].name, "");
+		const_table[index].type = 0;
+		const_table[index].value = 0;
+		const_table[index].is_valid = 0;
+		const_table[index].quat_ptr = -1;
+	}
+	//没找到就不管
+}
+int update_const_table(char* op,int type,int value,int value_type)//如果是变量其实不知道值类型，默认为0
+{
+	if (type == 2)
+	{
+		strcpy(const_table[c_ptr].name,op);
+		const_table[c_ptr].type = value_type;
+		const_table[c_ptr].value = value;
+		const_table[c_ptr].is_valid = 1;
+		const_table[c_ptr].quat_ptr = optquat_ptr;
+		c_ptr++;
+	}
+	else if (type == 1)
+	{
+		char temp[MAX_OP_LEN];
+		sprintf(temp, "%%d", c_ptr-c_local_ptr);
+		strcpy(const_table[c_ptr].name, temp);
+		const_table[c_ptr].type = value_type;
+		const_table[c_ptr].value = value;
+		const_table[c_ptr].is_valid = 1;
+		const_table[c_ptr].quat_ptr = optquat_ptr;
+		c_ptr++;
 	}
 	else
 	{
-		if (const_find_value(quat->op2[0], &value2))
+		int v;
+		int index;
+		if (!const_find_value(op, &v,&index))//没有找到，新增
 		{
-			flag2 = 1;
+			strcpy(const_table[c_ptr].name, op);
+			const_table[c_ptr].type = value_type;
+			const_table[c_ptr].value = value;
+			const_table[c_ptr].is_valid = 1;
+			const_table[c_ptr].quat_ptr = optquat_ptr;
+			c_ptr++;
+		}
+		else//找到了
+		{
+			const_table[index].value = value;
+			const_table[index].quat_ptr = optquat_ptr;
 		}
 	}
-	if (flag1&&flag2)
-	{
-		update_const_table();
-	}
 }
 
-int update_const_table()
-{
-
-}
-
-int const_find_value(char* op,int* value)//找常量值，1找到0没找到
+int const_find_value(char* op,int* value,int* index)//找常量值，1找到0没找到
 {
 	int i;
 	for (i = 0; i < c_ptr; i++)
@@ -3440,6 +3629,7 @@ int const_find_value(char* op,int* value)//找常量值，1找到0没找到
 			if (!strcmp(const_table[i].name, op))
 			{
 				*value = const_table[i].value;
+				*index = i;
 				if (op[0] == '$')//为常数的临时变量的值被用了，删除生成临时变量的四元式
 				{
 					optquat_table[const_table[i].quat_ptr].is_empty = 1;
