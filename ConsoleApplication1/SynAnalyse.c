@@ -3196,6 +3196,7 @@ void gen_nop()
 void quat_opt()
 {
 	int _is = 0;
+	int i,j=0;
 	printf("是否要做四元式优化？【1是/0否】");
 	scanf("%d",&_is);
 	if (_is)
@@ -3216,6 +3217,16 @@ void quat_opt()
 	}
 	print_opt_quat();
 	fclose(quat_out);
+	for (i = 0; optquat_table[i].op != EOMAINFUNC; i++)
+	{
+		if (!optquat_table[i].is_empty)
+		{
+			quat_table[j] = optquat_table[i];
+			j++;
+		}
+	}
+	quat_table[j] = optquat_table[i];
+	quat_table[j + 1].label = 0;
 }
 
 void print_opt_quat()
@@ -3286,7 +3297,7 @@ int div_func(int i)
 {
 	int blk_ptr = 0;//基本块指针
 	int j, k, l;
-	char *label;
+	char label[MAX_OP_LEN];
 	initial_block();
 	while (optquat_table[i].op == CONST || optquat_table[i].op == VAR)
 	{
@@ -3299,7 +3310,8 @@ int div_func(int i)
 		if (optquat_table[i].op == JZ || optquat_table[i].op == JNZ ||
 			optquat_table[i].op == JL || optquat_table[i].op == JLE ||
 			optquat_table[i].op == JG || optquat_table[i].op == JGE ||
-			optquat_table[i].op == JE || optquat_table[i].op == JNE || optquat_table[i].op == CJNE )
+			optquat_table[i].op == JE || optquat_table[i].op == JNE || optquat_table[i].op == CJNE ||
+			optquat_table[i].op == RET || optquat_table[i].op == JMP)
 		{
 			//跳转或返回指令后一句应分块
 			if (optquat_table[i + 1].op != EOFUNC && optquat_table[i + 1].op != EOMAINFUNC) 
@@ -3319,7 +3331,7 @@ int div_func(int i)
 			}
 			if (optquat_table[i].op != RET)
 			{
-				for (j = 0; j < optquat_ptr; j++)    //寻找跳转到的语句
+				for (j = 0; j < quat_ptr; j++)    //寻找跳转到的语句
 				{
 					sprintf(label, "LABEL_%d", optquat_table[j].label);
 					if (!strcmp(optquat_table[i].opr, label))//找到了
@@ -3351,7 +3363,7 @@ int div_func(int i)
 			}
 	for (j = 0; j < blk_ptr-1; j++)//填写end
 	{
-		block_table[func_ptr][j].end = block_table[func_ptr][j].start - 1;
+		block_table[func_ptr][j].end = block_table[func_ptr][j+1].start - 1;
 	}
 	block_table[func_ptr][j].end = i;//记录函数结束后下一条四元式位置
 	for (j = 0; j < blk_ptr; j++)//填写next
@@ -3359,9 +3371,9 @@ int div_func(int i)
 		for (k = 0; k < block_table[func_ptr][j].prev_len; k++)
 		{
 			int p = block_table[func_ptr][j].prev[k];//提取一个前驱，遍历寻找
-			for (l = 0; l < blk_ptr; j++)
+			for (l = 0; l < blk_ptr; l++)
 			{
-				if (block_table[func_ptr][l].end = p)//这里应该不可能有重复后继
+				if (block_table[func_ptr][l].end == p)//这里应该不可能有重复后继
 				{
 					if (block_table[func_ptr][l].next_len == 0)
 						block_table[func_ptr][l].next_1 = j;
@@ -3373,11 +3385,11 @@ int div_func(int i)
 				}
 			}
 		}
-		block_table[func_ptr][j].end = block_table[func_ptr][j].start - 1;
 	}
+	/*
 	block[func_ptr][blk_ptr] = i;//记录函数结束后下一条四元式位置
 	blk_ptr++;
-	block[func_ptr][blk_ptr] = -1;//用-1标记结束
+	block[func_ptr][blk_ptr] = -1;//用-1标记结束*/
 	func_ptr++;
 	i++;
 	return i;
@@ -3398,7 +3410,7 @@ void const_propagation()
 	c_local_ptr = c_ptr;//进入函数，置常量表指针
 	for (i = 0; i < func_ptr; i++)
 	{
-		while (optquat_ptr < block[i][0])
+		while (optquat_ptr < block_table[i][0].start)
 		{
 			if (optquat_table[optquat_ptr].op == CONST)
 			{
@@ -3407,17 +3419,17 @@ void const_propagation()
 			optquat_ptr++;
 		}
 		c_var_ptr = c_ptr;//进入块，置常量表指针
-		for (j = 0; block[i][j + 1] != -1; j++)
+		for (j = 0; block_table[i][j].start != -1; j++)
 		{
-			process_block(block[i][j], block[i][j + 1]);
+			process_block(block_table[i][j].start, block_table[i][j].end);
 		}
-		optquat_ptr = block[i][j];
+		optquat_ptr = block_table[i][j-1].end;
 	}
 }
 void process_block(int start, int end)
 {
 	int i;
-	for (i = start; i < end; i++)
+	for (i = start; i <= end; i++)
 	{
 		process_quat(&optquat_table[i], 0);
 		optquat_ptr++;
