@@ -102,8 +102,8 @@ int add_tmp(char *name, int type)
 }
 int gen_op(char *name, int i,int type,int array_i, int array_i_type)//0Îª·ûºÅ±íÖ¸Õë£¬1ÎªintÁ¢¼´Êı, 2ÎªcharÁ¢¼´Êı, 3ÎªÊı×é£¨ÔÚÏÂ²ã£¬´Ë´¦²»»á·µ»Ø3£©
 {
-	char tmp[MAX_OP_LEN];
-	char tmp1[MAX_OP_LEN];
+	char tmp[MAX_OP_LEN]="";
+	char tmp1[MAX_OP_LEN]="";
 	int tmp_type;
 	if (type == 0)
 	{
@@ -189,7 +189,7 @@ void handle_error(int *type)//Ìø¶Áº¯ÊıtypeÎªÌø¶Á½áÊø·ûºÅ¼¯
 int const_defination()//³£Á¿¶¨Òå
 {
 	int position;
-	char temp_str[MAX_OP_LEN];
+	char temp_str[MAX_OP_LEN]="";
 	if (sym == INTSYM)
 	{
 		sym = getsym();
@@ -359,7 +359,7 @@ int const_declaration()
 int var_defination()
 {
 	int position;
-	char temp_str[MAX_OP_LEN];
+	char temp_str[MAX_OP_LEN]="";
 	int head_type;
 	head_type = head();
 	if (head_type==0)
@@ -436,7 +436,7 @@ int var_defination()
 int var_defination_backend(int head_type)
 {
 	int position;
-	char temp_str[MAX_OP_LEN];
+	char temp_str[MAX_OP_LEN]="";
 	if (sym == SEMICOLONSYM)
 	{
 		printf("Line:%d --This is a var_defination_statement!\n", line+1);
@@ -638,7 +638,7 @@ int value_parameter_table(int i)
 	int j;//±í´ïÊ½·µ»ØÖµ
 	int type;//±í´ïÊ½·µ»ØÀàĞÍ
 	char para_stack[MAX_PARA_LEN][MAX_OP_LEN];
-	char op_1[MAX_OP_LEN];
+	char op_1[MAX_OP_LEN]="";
 	if (sym == RPARENSYM)
 	{
 		if (sym_table[i + 1].type == TYPE_PARA)
@@ -1036,9 +1036,9 @@ int assign_statement(int i)
 	int now_ptr;
 	int type;
 	int tmp_type_1, tmp_type_2;//ÎªÁËÅĞ¶Ï¸³ÖµÁ½²àÀàĞÍÊÇ·ñÏàÍ¬
-	char op_1[MAX_OP_LEN] = { 0 };
-	char op_2[MAX_OP_LEN] = { 0 };
-	char op_r[MAX_OP_LEN] = { 0 };
+	char op_1[MAX_OP_LEN]="";
+	char op_2[MAX_OP_LEN]="";
+	char op_r[MAX_OP_LEN]="";
 	if (sym_table[i].type != TYPE_VAR&&sym_table[i].type != TYPE_ARRAY&&sym_table[i].type != TYPE_PARA)
 	{
 		error(ASSIGN_TYPE_ERROR);
@@ -1272,7 +1272,7 @@ int statement()
 }
 int if_statement()
 {
-	char label_str[MAX_OP_LEN];
+	char label_str[MAX_OP_LEN]="";
 	int label_1, label_2;
 	if (sym != IFSYM)
 	{
@@ -1339,7 +1339,7 @@ int if_statement()
 }
 int while_statement()
 {
-	char label_str[MAX_OP_LEN];
+	char label_str[MAX_OP_LEN]="";
 	int label_1, label_2;
 	int quat_tmp_ptr;//±£´æwhileÖ¸ÁîµÄËÄÔªÊ½Ö¸Õë
 	if (sym != WHILESYM)
@@ -1390,8 +1390,8 @@ int condition_statement(char *label)//ÔÚÆäÖĞÉú³ÉÌõ¼şÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 {
 	int i;
 	int type;
-	char op_1[MAX_OP_LEN] = { 0 };
-	char op_2[MAX_OP_LEN] = { 0 };
+	char op_1[MAX_OP_LEN]="";
+	char op_2[MAX_OP_LEN]="";
 	int temp_op;
 	i = expression(&type);
 	if (i == -1 && type == 4)
@@ -1434,7 +1434,7 @@ int condition_statement(char *label)//ÔÚÆäÖĞÉú³ÉÌõ¼şÌø×ªÓï¾ä£¬·µ»Ø¸ÃÓï¾äµÄËÄÔªÊ½
 int scanf_statement()
 {
 	int i;
-	char op_1[MAX_OP_LEN] = { 0 };
+	char op_1[MAX_OP_LEN]="";
 	if (sym != SCANFSYM)
 	{
 		error(ERROR_IN_SCANF);
@@ -1506,7 +1506,7 @@ int scanf_statement()
 int printf_statement()
 {
 	int i, type;
-	char str[MAX_OP_LEN];
+	char str[MAX_OP_LEN]="";
 	char op_1[MAX_OP_LEN ];
 	if (sym != PRINTFSYM)
 	{
@@ -1582,8 +1582,8 @@ int switch_statement()
 	int i, type;
 	int tmp_label;//±£´æÔÚËùÓĞÓï¾äºóÒªÌø×ªµ½µÄlabelºÅ
 	int return_label;//±£´æcaseÓï¾ä×îºóÒªÌø×ªµ½µÄlabelºÅ
-	char label[MAX_OP_LEN];
-	char op_1[MAX_OP_LEN];
+	char label[MAX_OP_LEN]="";
+	char op_1[MAX_OP_LEN]="";
 	if (sym != SWITCHSYM)
 	{
 		error(ERROR_IN_SWITCH);
@@ -1653,8 +1653,8 @@ int switch_table(int i,char *op_1)//i±íÊ¾³É¹¦ºóÎŞÌõ¼şÌø×ªµ½µÄlabelºÅ,op_1ÊÇÒª±È½
 {
 	int tmp;//±£´æµ±Ç°µÄÅĞ¶ÏÖµ
 	int f_label;//±£´æÉÏÒ»¸ölabelºÅ
-	char op_2[MAX_OP_LEN];
-	char label[MAX_OP_LEN];
+	char op_2[MAX_OP_LEN]="";
+	char label[MAX_OP_LEN]="";
 	if (sym != CASESYM)
 	{
 		error(MISSING_CASE_LABEL);
@@ -1790,9 +1790,9 @@ int return_statement()
 }
 int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1ÎªintÁ¢¼´Êı,2ÎªcharÁ¢¼´Êı,3ÎªÊı×é£¨ÔÚÏÂ²ã£¬´Ë´¦²»»á·µ»Ø3£©£¬4Îª±¨´í´ËÊ±·µ»Ø-1
 {
-	char op_1[MAX_OP_LEN] = { 0 };
-	char op_2[MAX_OP_LEN] = { 0 };
-	char op_r[MAX_OP_LEN] = { 0 };
+	char op_1[MAX_OP_LEN]="";
+	char op_2[MAX_OP_LEN]="";
+	char op_r[MAX_OP_LEN]="";
 	int i;
 	int array_i=0,array_i_type=0;
 	int tmp_type1,tmp_type2;
@@ -1878,9 +1878,9 @@ int expression(int *type)//±í´ïÊ½,´«ÈëµÄÖ¸Õë±íÊ¾·µ»ØµÄÊıµÄÀàĞÍ£¬0Îª·ûºÅ±íÖ¸Õë£¬1
 }
 int item(int *type,int *array_i,int *array_i_type)//Ïî
 {
-	char op_1[MAX_OP_LEN] = { 0 };
-	char op_2[MAX_OP_LEN] = { 0 };
-	char op_r[MAX_OP_LEN] = { 0 };
+	char op_1[MAX_OP_LEN]="";
+	char op_2[MAX_OP_LEN]="";
+	char op_r[MAX_OP_LEN]="";
 	int tmp_type1, tmp_type2;
 	int i;
 	int op;//µ±Ç°ÊÇ³Ë³ıºÅ
@@ -1917,9 +1917,9 @@ int item(int *type,int *array_i,int *array_i_type)//Ïî
 }
 int factor(int *type, int *array_i, int *array_i_type)//Òò×Ó
 {
-	char op_1[MAX_OP_LEN] = { 0 };
-	char op_2[MAX_OP_LEN] = { 0 };
-	char op_r[MAX_OP_LEN] = { 0 };
+	char op_1[MAX_OP_LEN]="";
+	char op_2[MAX_OP_LEN]="";
+	char op_r[MAX_OP_LEN]="";
 	int i;
 	*type = 0;//Çå¿Õ£¬ÆäÊµÖ»ÓÃÉÏ´«
 	if (sym == IDSYM)//±êÊ¶·û£¬Êı×é£¬ÓĞ·µ»ØÖµº¯Êıµ÷ÓÃ
@@ -2030,7 +2030,7 @@ int program()
 	int var_flag = 0;//ÔÚÖ÷³ÌĞòÖĞµÄº¯Êı¶¨Òåºó²»Ó¦¸ÃÓĞ±äÁ¿ËµÃ÷
 	int head_type;
 	int position;
-	char temp_str[MAX_OP_LEN];
+	char temp_str[MAX_OP_LEN]="";
 	sym = getsym();
 	if (sym == CONSTSYM)//³£Á¿ËµÃ÷
 	{
@@ -2309,7 +2309,7 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 		}
 		else if (op1[0] == '$')//Èç¹ûÊÇÁÙÊ±±äÁ¿
 		{
-			char tmp_op[MAX_OP_LEN];//ÕâÀï²»ÄÜÖ±½Ó¸Äop,·ñÔòµÚ¶ş¸öÅĞ¶Ï»á³ö´í
+			char tmp_op[MAX_OP_LEN]="";//ÕâÀï²»ÄÜÖ±½Ó¸Äop,·ñÔòµÚ¶ş¸öÅĞ¶Ï»á³ö´í
 			strcpy(tmp_op, op1);
 			tmp_op[0] = '0';
 			offset = atoi(tmp_op);
@@ -2331,8 +2331,8 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 		}
 		else if (op1[0] == '&')//Èç¹ûÊÇÊı×é£¬×¢Òâ£¬´ËÊ±Ó¦ÎªMOVÓï¾ä£¬ÇÒop2Ó¦Îª¿Õ
 		{
-			char temp_name[MAX_OP_LEN];
-			char temp_num[MAX_OP_LEN];
+			char temp_name[MAX_OP_LEN]="";
+			char temp_num[MAX_OP_LEN]="";
 			int i;
 			int j = 0;
 			int index;//Êı×éÖĞµÄ±êºÅ
@@ -2613,8 +2613,8 @@ int save_result(char *opr)//´æ½á¹û£¬½«s2¼Ä´æÆ÷ÖĞµÄÖµ´æµ½½á¹ûÖĞ
 		}
 		else if (opr[0] == '&')//Èç¹ûÊÇÊı×é
 		{
-			char temp_name[MAX_OP_LEN];
-			char temp_num[MAX_OP_LEN];
+			char temp_name[MAX_OP_LEN]="";
+			char temp_num[MAX_OP_LEN]="";
 			int i;
 			int j = 0;
 			int index;//Êı×éÖĞµÄ±êºÅ
@@ -2816,7 +2816,7 @@ int save_result(char *opr)//´æ½á¹û£¬½«s2¼Ä´æÆ÷ÖĞµÄÖµ´æµ½½á¹ûÖĞ
 void gen_data()
 {
 	int i;
-	char tmp[MAX_OP_LEN];
+	char tmp[MAX_OP_LEN]="";
 	fprintf(mips, ".data\n");
 	while (quat_table[gen_mips_ptr].op == CONST)
 	{
@@ -3105,7 +3105,7 @@ void gen_j()
 void gen_ret()//½«·µ»ØÖµ·ÅÖÃÔÚa0ÖĞ
 {
 	int r;
-	char tmp[MAX_OP_LEN];
+	char tmp[MAX_OP_LEN]="";
 	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
 	if (r != -1 && r != 0)
 	{
@@ -3297,7 +3297,7 @@ int div_func(int i)
 {
 	int blk_ptr = 0;//»ù±¾¿éÖ¸Õë
 	int j, k, l;
-	char label[MAX_OP_LEN];
+	char label[MAX_OP_LEN]="";
 	initial_block();
 	while (optquat_table[i].op == CONST || optquat_table[i].op == VAR)
 	{
@@ -3498,9 +3498,9 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 		}
 		else if (quat->op1[0] == '&')//ÊÇÊı×é
 		{
-			char temp_name[MAX_OP_LEN];
-			char temp_num[MAX_OP_LEN];
-			char temp_whole[MAX_OP_LEN];
+			char temp_name[MAX_OP_LEN]="";
+			char temp_num[MAX_OP_LEN]="";
+			char temp_whole[MAX_OP_LEN]="";
 			int i;
 			int j = 0;
 			int value_index = 0;//Êı×éÏÂ±êÖµ
@@ -3526,10 +3526,14 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 				strcat(temp_whole, "]");
 				if (const_find_value(temp_whole, &value1,&useless))
 				{
-					char temp_str[MAX_OP_LEN];
+					char temp_str[MAX_OP_LEN]="";
 					sprintf(temp_str, "%d", value1);
 					strcpy(quat->op1, temp_str);
 					flag1 = 1;
+				}
+				else
+				{
+					strcpy(quat->op1, temp_whole);
 				}
 			}
 		}
@@ -3537,7 +3541,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 		{
 			if (const_find_value(quat->op1, &value1,&useless))
 			{
-				char temp_str[MAX_OP_LEN];
+				char temp_str[MAX_OP_LEN]="";
 				sprintf(temp_str, "%d", value1);
 				strcpy(quat->op1, temp_str);
 				flag1 = 1;
@@ -3550,9 +3554,9 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 		}
 		else if (quat->op2[0] == '&')//ÊÇÊı×é
 		{
-			char temp_name[MAX_OP_LEN];
-			char temp_num[MAX_OP_LEN];
-			char temp_whole[MAX_OP_LEN];
+			char temp_name[MAX_OP_LEN]="";
+			char temp_num[MAX_OP_LEN]="";
+			char temp_whole[MAX_OP_LEN]="";
 			int i;
 			int j = 0;
 			int value_index = 0;//Êı×éÏÂ±êÖµ
@@ -3578,10 +3582,14 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 				strcat(temp_whole, "]");
 				if (const_find_value(temp_whole, &value2,&useless))
 				{
-					char temp_str[MAX_OP_LEN];
+					char temp_str[MAX_OP_LEN]="";
 					sprintf(temp_str, "%d", value2);
 					strcpy(quat->op2, temp_str);
 					flag2 = 1;
+				}
+				else
+				{
+					strcpy(quat->op2, temp_whole);
 				}
 			}
 		}
@@ -3589,7 +3597,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 		{
 			if (const_find_value(quat->op2, &value2,&useless))
 			{
-				char temp_str[MAX_OP_LEN];
+				char temp_str[MAX_OP_LEN]="";
 				sprintf(temp_str, "%d", value2);
 				strcpy(quat->op2, temp_str);
 				flag2 = 1;
@@ -3629,9 +3637,9 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 				}
 				if (quat->opr[0] == '&')//ÊÇÊı×é
 				{
-					char temp_name[MAX_OP_LEN];
-					char temp_num[MAX_OP_LEN];
-					char temp_whole[MAX_OP_LEN];
+					char temp_name[MAX_OP_LEN]="";
+					char temp_num[MAX_OP_LEN]="";
+					char temp_whole[MAX_OP_LEN]="";
 					int i;
 					int j = 0;
 					int value_index = 0;//Êı×éÏÂ±êÖµ
@@ -3656,6 +3664,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 						strcat(temp_whole, temp_num);
 						strcat(temp_whole, "]");
 						update_const_table(temp_whole, 0, value, 0);
+						strcpy(quat->opr, temp_whole);
 					}
 				}
 				else
@@ -3667,7 +3676,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 			{
 				if (quat->op == NEG)
 				{
-					char temp[MAX_OP_LEN];
+					char temp[MAX_OP_LEN]="";
 					value = -value1;
 					sprintf(temp, "%d", value);
 					quat->op = MOV;
@@ -3677,7 +3686,42 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 				{
 					value = value1;
 				}
-				update_const_table(quat->opr, 0, value, 0);
+				if (quat->opr[0] == '&')//ÊÇÊı×é
+				{
+					char temp_name[MAX_OP_LEN]="";
+					char temp_num[MAX_OP_LEN]="";
+					char temp_whole[MAX_OP_LEN]="";
+					int i;
+					int j = 0;
+					int value_index = 0;//Êı×éÏÂ±êÖµ
+					int flag_index = 0;
+					for (i = 0; quat->opr[i] != '['; i++)
+					{
+						temp_name[i] = quat->opr[i];
+					}
+					for (i = i + 1; quat->opr[i] != ']'; i++)
+					{
+						temp_num[j++] = quat->opr[i];
+					}
+					if (const_find_value(temp_num, &value_index, &useless))
+					{
+						flag_index = 1;
+						sprintf(temp_num, "%d", value_index);
+					}
+					if (flag_index)
+					{
+						strcat(temp_whole, temp_name);
+						strcat(temp_whole, "[");
+						strcat(temp_whole, temp_num);
+						strcat(temp_whole, "]");
+						update_const_table(temp_whole, 0, value, 0);
+						strcpy(quat->opr, temp_whole);
+					}
+				}
+				else
+				{
+					update_const_table(quat->opr, 0, value, 0);
+				}
 			}
 			else//ÕâÊÇÓ¦¸ÃÉ¾³ı£¬ÒòÎª¸³ÁË·Ç³£ÊıÁ¿
 			{
@@ -3712,7 +3756,7 @@ int update_const_table(char* op,int type,int value,int value_type)//Èç¹ûÊÇ±äÁ¿Æä
 	}
 	else if (type == 1)
 	{
-		char temp[MAX_OP_LEN];
+		char temp[MAX_OP_LEN]="";
 		sprintf(temp, "%%d", c_ptr-c_local_ptr);
 		strcpy(const_table[c_ptr].name, temp);
 		const_table[c_ptr].type = value_type;
