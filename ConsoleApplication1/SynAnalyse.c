@@ -3255,38 +3255,67 @@ void gen_block()
 		i = div_func(i);
 	}
 }
+void initial_block()//只初始化一个函数里的
+{
+	int i;
+	for (i = 0; i < MAX_BLOCK_LEN; i++)
+	{
+		block_table[func_ptr][i].start = -1;
+		block_table[func_ptr][i].end = -1;
+		block_table[func_ptr][i].prev_len = 0;
+		block_table[func_ptr][i].next_len = 0;
+		block_table[func_ptr][i].next_1 = -1;
+		block_table[func_ptr][i].next_2 = -1;
+		block_table[func_ptr][i].def_len = 0;
+		block_table[func_ptr][i].use_len = 0;
+	}
+}
+void insert_block_prev(int index,int v)
+{
+	int i;
+	for (i = 0; i < block_table[func_ptr][index].prev_len; i++)
+	{
+		if (block_table[func_ptr][index].prev[i] == v)
+			return;
+	}
+	block_table[func_ptr][index].prev[block_table[func_ptr][index].prev_len] = v;
+	block_table[func_ptr][index].prev_len++;
+}
 
 int div_func(int i)
 {
 	int blk_ptr = 0;//基本块指针
-	int j, k;
-	int temp;
+	int j, k, l;
 	char *label;
+	initial_block();
 	while (optquat_table[i].op == CONST || optquat_table[i].op == VAR)
 	{
 		i++;
 	}
-	block[func_ptr][blk_ptr] = i;
+	block_table[func_ptr][blk_ptr].start = i;
 	blk_ptr++;
 	while (optquat_table[i].op != EOFUNC && optquat_table[i].op != EOMAINFUNC)
 	{
 		if (optquat_table[i].op == JZ || optquat_table[i].op == JNZ ||
 			optquat_table[i].op == JL || optquat_table[i].op == JLE ||
 			optquat_table[i].op == JG || optquat_table[i].op == JGE ||
-			optquat_table[i].op == JE || optquat_table[i].op == JNE || optquat_table[i].op == CJNE ||
-			optquat_table[i].op == JMP || optquat_table[i].op == RET)
+			optquat_table[i].op == JE || optquat_table[i].op == JNE || optquat_table[i].op == CJNE )
 		{
 			//跳转或返回指令后一句应分块
 			if (optquat_table[i + 1].op != EOFUNC && optquat_table[i + 1].op != EOMAINFUNC) 
 			{
 				for (k = 0; k < blk_ptr; k++)  //遍历看是否已经分块
-					if (block[func_ptr][k] == i + 1)
+				{
+					if (block_table[func_ptr][k].start== i + 1)
 						break;
+				}
 				if (k == blk_ptr)//没有找到
 				{
-					block[func_ptr][blk_ptr] = i + 1;
+					block_table[func_ptr][blk_ptr].start = i + 1;
 					blk_ptr++;
 				}
+				if (optquat_table[i].op != RET && optquat_table[i].op != JMP)//添加前驱
+					insert_block_prev(k, i);
 			}
 			if (optquat_table[i].op != RET)
 			{
@@ -3296,13 +3325,15 @@ int div_func(int i)
 					if (!strcmp(optquat_table[i].opr, label))//找到了
 					{
 						for (k = 0; k < blk_ptr; k++)  //是否已经存在
-							if (block[func_ptr][k] == j)
+							if (block_table[func_ptr][k].start == j)
 								break;
 						if (k == blk_ptr)//没有找到
 						{
-							block[func_ptr][blk_ptr] = j;
+							block_table[func_ptr][blk_ptr].start = j;
 							blk_ptr++;
 						}
+						//添加前驱
+						insert_block_prev(k, i);
 						break;
 					}
 				}
@@ -3312,12 +3343,38 @@ int div_func(int i)
 	}
 	for (j = 0; j < blk_ptr; j++)  //这样生成的分块可能是乱序的，冒泡排序
 		for (k = blk_ptr - 1; k > j; k--)
-			if (block[func_ptr][k] < block[func_ptr][k - 1])
+			if (block_table[func_ptr][k].start < block_table[func_ptr][k - 1].start)
 			{
-				temp = block[func_ptr][k];
-				block[func_ptr][k] = block[func_ptr][k - 1];
-				block[func_ptr][k - 1] = temp;
+				temp = block_table[func_ptr][k];
+				block_table[func_ptr][k] = block_table[func_ptr][k - 1];
+				block_table[func_ptr][k - 1] = temp;
 			}
+	for (j = 0; j < blk_ptr-1; j++)//填写end
+	{
+		block_table[func_ptr][j].end = block_table[func_ptr][j].start - 1;
+	}
+	block_table[func_ptr][j].end = i;//记录函数结束后下一条四元式位置
+	for (j = 0; j < blk_ptr; j++)//填写next
+	{
+		for (k = 0; k < block_table[func_ptr][j].prev_len; k++)
+		{
+			int p = block_table[func_ptr][j].prev[k];//提取一个前驱，遍历寻找
+			for (l = 0; l < blk_ptr; j++)
+			{
+				if (block_table[func_ptr][l].end = p)//这里应该不可能有重复后继
+				{
+					if (block_table[func_ptr][l].next_len == 0)
+						block_table[func_ptr][l].next_1 = j;
+					else if (block_table[func_ptr][l].next_len == 1)
+						block_table[func_ptr][l].next_2 = j;
+					else
+						error(UNDEFINE_ERROR);
+					block_table[func_ptr][l].next_len++;
+				}
+			}
+		}
+		block_table[func_ptr][j].end = block_table[func_ptr][j].start - 1;
+	}
 	block[func_ptr][blk_ptr] = i;//记录函数结束后下一条四元式位置
 	blk_ptr++;
 	block[func_ptr][blk_ptr] = -1;//用-1标记结束

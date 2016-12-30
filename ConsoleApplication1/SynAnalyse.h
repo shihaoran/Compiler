@@ -73,6 +73,8 @@ void quat_opt();
 void print_opt_quat();
 void copy_quat();
 void gen_block();
+void initial_block();
+void insert_block_prev(int index, int v);
 int div_func(int i);
 void const_propagation();
 void process_block(int start, int end);
@@ -92,6 +94,8 @@ int const_find_value(char* op, int* value, int* index);
 #define MAX_CONST_LEN 512 //用于优化的常量表最长值
 #define MAX_FUNC_LEN 128 //用于优化的函数数量最长值
 #define MAX_BLOCK_LEN 128 //用于优化的基本块最长值
+#define MAX_DEFUSE_NUM 32 //用于活跃变量分析
+#define MAX_PREV_NUM 32 //用于活跃变量分析
 
 /*=================生成四元式部分===================*/
 
@@ -213,6 +217,22 @@ struct const_record
 	int is_valid;
 	int quat_ptr;//对应第一次定义的四元式表位置，用于删除赋常数值的临时变量
 } const_table[MAX_CONST_LEN];
+
+/********基本块表数据结构*******/
+struct block_record
+{
+	int start;
+	int end;//如果只有一条则相等
+	int prev_len;
+	int prev[MAX_PREV_NUM];//前驱位置列表
+	int next_len;
+	int next_1;//后继
+	int next_2;//跳转后继，没有则为-1,最多只可能有两个
+	int def_len;
+	int use_len;
+	int def[MAX_DEFUSE_NUM];
+	int use[MAX_DEFUSE_NUM];
+} block_table[MAX_FUNC_LEN][MAX_BLOCK_LEN],temp;
 
 /********定义各种指针*******/
 int sym_ptr = 0;//当前符号表尽头指针
