@@ -2293,15 +2293,47 @@ void gen_mips()
 	gen_text();
 	fclose(mips);
 }
+int handle_result(char* opr)
+{
+	int i, num;
+	char temp_num[MAX_NUM_LEN] = "";
+	char temp[MAX_OP_LEN] = "";
+	if (opr[0] == '#')//Èç¹ûÊÇ¼Ä´æÆ÷
+	{
+		for (i = 1; isdight(opr[i]); i++)
+			temp_num[i - 1] = opr[i];
+		num = atoi(temp_num);
+		sprintf(opr, "%s", reg_name[num]);
+		return 1;
+	}
+	else
+	{
+		sprintf(opr, "s2");
+		return 0;
+	}
+}
 int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷ÖÐ,-1¶¼¿Õ,0Ö»ÓÐop1,1Ö»ÓÐop2,2¶¼ÓÐ
 {
 	int offset = 0;
 	int flag1 = 0;
 	int flag2 = 0;
+	int flag_reg = 1;
+	int i;
+	char temp_num[MAX_NUM_LEN]="";
+	int num;
 	if (strcmp(op1,""))//Èç¹ûop1²»Îª¿Õ
 	{
 		flag1 = 1;
-		if (op1[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
+		if (op1[0] == '#')//Èç¹ûÊÇ¼Ä´æÆ÷
+		{
+			temp_num[MAX_NUM_LEN] = "";
+			for (i = 1; isdight(op1[i]); i++)
+				temp_num[i - 1] = op1[i];
+			num = atoi(temp_num);
+			sprintf(op1, "%s", reg_name[num]);
+			flag_reg = 0;
+		}
+		else if (op1[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
 			op1[0] = '0';
 			offset = atoi(op1);
@@ -2510,8 +2542,6 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 					fprintf(mips, "\tlw  $s0, 0($t1)\n");
 				}
 			}
-			
-
 		}
 		else if ((op1[0] >= '0'&&op1[0] <= '9') || op1[0] == '-')//Èç¹ûÊÇÁ¢¼´Êý
 		{
@@ -2526,12 +2556,21 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 		{
 			fprintf(mips, "\tla  $t0, %s\n", op1);//È¡È«¾ÖÁ¿µØÖ·
 			fprintf(mips, "\tlw  $s0, 0($t0)\n");//´æÈës0ÖÐ
-
 		}
+		if (flag_reg)
+			sprintf(op1, "s0");//Èç¹û²»ÊÇ·ÖÅä¼Ä´æÆ÷µÄ±äÁ¿£¬´æÔÚs0ÖÐ
 	}
 	if (strcmp(op2, ""))//Èç¹ûop2²»Îª¿Õ
 	{
 		flag2 = 1;
+		if (op2[0] == '#')//Èç¹ûÊÇ¼Ä´æÆ÷
+		{
+			temp_num[MAX_NUM_LEN] = "";
+			for (i = 1; isdight(op2[i]); i++)
+				temp_num[i - 1] = op2[i];
+			num = atoi(temp_num);
+			sprintf(op2, "%s", reg_name[num]);
+		}
 		if (op2[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
 			op2[0] = '0';
@@ -2575,6 +2614,7 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 			fprintf(mips, "\tlw  $s1, 0($t0)\n");//´æÈës1ÖÐ
 
 		}
+		sprintf(op2, "s1");
 	}
 	if (flag1&&flag2)
 		return 2;
@@ -2970,87 +3010,168 @@ void gen_text()//Éú³É´úÂëÖ÷º¯Êý
 void gen_add()
 {
 	int r;
-	r=handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r= handle_op(op1, op2);
 	if (r != 2)
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\tadd  $s2, $s0, $s1\n");
-	if(!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tadd  $%s, $%s, $%s\n", opr, op1, op2);
 	}
+	else
+	{
+		fprintf(mips, "\tadd  $%s, $%s, $%s\n", opr, op1, op2);
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
+	}
+	
 }
 void gen_sub()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 2)
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\tsub  $s2, $s0, $s1\n");
-	if (!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tsub  $%s, $%s, $%s\n", opr, op1, op2);
+	}
+	else
+	{
+		fprintf(mips, "\tsub  $%s, $%s, $%s\n", opr, op1, op2);
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
 	}
 }
 void gen_mul()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 2)
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\tmult  $s0, $s1\n");
-	fprintf(mips, "\tmflo  $s2\n");
-	if (!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tmult  $%s, $%s\n", op1, op2);
+		fprintf(mips, "\tmflo  $%s\n",opr);
+	}
+	else
+	{
+		fprintf(mips, "\tmult  $%s, $%s\n", op1, op2);
+		fprintf(mips, "\tmflo  $%s\n", opr);
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
 	}
 }
 void gen_div()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 2)
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\tdiv  $s0, $s1\n");
-	fprintf(mips, "\tmflo  $s2\n");
-	if (!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tdiv  $%s, $%s\n", op1, op2);
+		fprintf(mips, "\tmflo  $%s\n", opr);
+	}
+	else
+	{
+		fprintf(mips, "\tdiv  $%s, $%s\n", op1, op2);
+		fprintf(mips, "\tmflo  $%s\n", opr);
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
 	}
 }
 void gen_neg()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 0)
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\tsub  $s2, $0, $s0\n");
-	if (!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tsub  $%s, $0, $%s\n", opr, op1);
+	}
+	else
+	{
+		fprintf(mips, "\tsub  $%s, $0, $%s\n", opr, op1);
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
 	}
 }
 void gen_mov()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 0)
 	{
 		error(UNDEFINE_ERROR);
 	}
-	fprintf(mips, "\tadd  $s2, $0, $s0\n");
-	if (!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tadd  $%s, $0, $%s\n", opr, op1);
+	}
+	else
+	{
+		fprintf(mips, "\tadd  $%s, $0, $%s\n", opr, op1);
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
 	}
 }
 void gen_jmp()
@@ -3060,7 +3181,13 @@ void gen_jmp()
 void gen_j()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 2&&r!=0)
 	{
 		error(UNDEFINE_ERROR);
@@ -3072,32 +3199,32 @@ void gen_j()
 	switch (quat_table[gen_mips_ptr].op)
 	{
 		case JE:
-			fprintf(mips, "\tbeq  $s0, $s1, %s\n", quat_table[gen_mips_ptr].opr);
+			fprintf(mips, "\tbeq  $%s, $%s, %s\n", op1, op2, quat_table[gen_mips_ptr].opr);
 			break;
 		case CJNE:
 		case JNE:
-			fprintf(mips, "\tbne  $s0, $s1, %s\n", quat_table[gen_mips_ptr].opr);
+			fprintf(mips, "\tbne  $%s, $%s, %s\n", op1, op2, quat_table[gen_mips_ptr].opr);
 			break;
 		case JZ:
-			fprintf(mips, "\tbeq  $s0, $0, %s\n", quat_table[gen_mips_ptr].opr);
+			fprintf(mips, "\tbeq  $%s, $0, %s\n", op1, quat_table[gen_mips_ptr].opr);
 			break;
 		case JNZ:
-			fprintf(mips, "\tbne  $s0, $0, %s\n", quat_table[gen_mips_ptr].opr);
+			fprintf(mips, "\tbne  $%s, $0, %s\n", op1, quat_table[gen_mips_ptr].opr);
 			break;
 		case JG:
-			fprintf(mips, "\tslt  $t0, $s1, $s0\n");
+			fprintf(mips, "\tslt  $t0, $%s, $%s\n", op2, op1);
 			fprintf(mips, "\tbne  $t0, $0, %s\n", quat_table[gen_mips_ptr].opr);
 			break;
 		case JGE:
-			fprintf(mips, "\tslt  $t0, $s0, $s1\n");
+			fprintf(mips, "\tslt  $t0, $%s, $%s\n", op1, op2);
 			fprintf(mips, "\tbeq  $t0, $0, %s\n", quat_table[gen_mips_ptr].opr);
 			break;
 		case JL:
-			fprintf(mips, "\tslt  $t0, $s0, $s1\n");
+			fprintf(mips, "\tslt  $t0, $%s, $%s\n", op1, op2);
 			fprintf(mips, "\tbne  $t0, $0, %s\n", quat_table[gen_mips_ptr].opr);
 			break;
 		case JLE:
-			fprintf(mips, "\tslt  $t0, $s1, $s0\n");
+			fprintf(mips, "\tslt  $t0, $%s, $%s\n", op2, op1);
 			fprintf(mips, "\tbeq  $t0, $0, %s\n", quat_table[gen_mips_ptr].opr);
 			break;
 	}
@@ -3105,8 +3232,14 @@ void gen_j()
 void gen_ret()//½«·µ»ØÖµ·ÅÖÃÔÚa0ÖÐ
 {
 	int r;
-	char tmp[MAX_OP_LEN]="";
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char tmp[MAX_OP_LEN] = "";
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != -1 && r != 0)
 	{
 		error(UNDEFINE_ERROR);
@@ -3119,7 +3252,7 @@ void gen_ret()//½«·µ»ØÖµ·ÅÖÃÔÚa0ÖÐ
 	}
 	else//ÓÐ·µ»ØÖµ£¬ÐèÒª´æµ½a0
 	{
-		fprintf(mips, "\tadd  $a0, $s0, $0\n");
+		fprintf(mips, "\tadd  $a0, $%s, $0\n",op1);
 		fprintf(mips, "\tj  %s\n", tmp);
 	}
 }
@@ -3133,32 +3266,50 @@ void gen_write()
 	}
 	if (strcmp(quat_table[gen_mips_ptr].op2, ""))//Èç¹û±äÁ¿²¿·Ö·Ç¿Õ
 	{
-		handle_op("", quat_table[gen_mips_ptr].op2);
+		char op1[MAX_OP_LEN] = "";
+		char op2[MAX_OP_LEN] = "";
+		strcpy(op2, quat_table[gen_mips_ptr].op2);
+		handle_op(op1, op2);
 		if(quat_table[gen_mips_ptr].op== CWRITE)
 			fprintf(mips, "\tli  $v0, 11\n");//ÖÃv0Îª´òÓ¡×Ö·û
 		else
 			fprintf(mips, "\tli  $v0, 1\n");//ÖÃv0Îª´òÓ¡ÕûÊý
-		fprintf(mips, "\tadd  $a0, $s1, $0\n");//ÖÃa0ÎªÕûÊýÖµ
+		fprintf(mips, "\tadd  $a0, $%s, $0\n",op2);//ÖÃa0ÎªÕûÊýÖµ
 		fprintf(mips, "\tsyscall\n");
 	}
 }
 void gen_read()
 {
+	char opr[MAX_OP_LEN] = "";
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
 	if(quat_table[gen_mips_ptr].op==READ)
 		fprintf(mips, "\tli  $v0, 5\n");//ÖÃv0Îª¶ÁÈ¡ÕûÊý
 	else//ÊÇCREAD
 		fprintf(mips, "\tli  $v0, 12\n");//ÖÃv0Îª¶ÁÈ¡×Ö·û
 	fprintf(mips, "\tsyscall\n");
-	fprintf(mips, "\tadd  $s2, $v0, $0\n");//ÖÃs2Îª¶ÁÈ¡ÈëµÄÕûÊý
-	if (!save_result(quat_table[gen_mips_ptr].opr))
+	if (handle_result(opr))//Èç¹ûÊÇ¼Ä´æÆ÷£¬²»ÓÃÔÙ´æÁË
 	{
-		error(UNDEFINE_ERROR);
+		fprintf(mips, "\tadd  $%s, $v0, $0\n",opr);//ÖÃs2Îª¶ÁÈ¡ÈëµÄÕûÊý
+	}
+	else
+	{
+		fprintf(mips, "\tadd  $%s, $v0, $0\n", opr);//ÖÃs2Îª¶ÁÈ¡ÈëµÄÕûÊý
+		if (!save_result(quat_table[gen_mips_ptr].opr))
+		{
+			error(UNDEFINE_ERROR);
+		}
 	}
 }
 void gen_para()
 {
 	int r;
-	r = handle_op(quat_table[gen_mips_ptr].op1, quat_table[gen_mips_ptr].op2);
+	char op1[MAX_OP_LEN] = "";
+	char op2[MAX_OP_LEN] = "";
+	char opr[MAX_OP_LEN] = "";
+	strcpy(op1, quat_table[gen_mips_ptr].op1);
+	strcpy(op2, quat_table[gen_mips_ptr].op2);
+	strcpy(opr, quat_table[gen_mips_ptr].opr);
+	r = handle_op(op1, op2);
 	if (r != 0)
 	{
 		error(UNDEFINE_ERROR);
@@ -3168,7 +3319,7 @@ void gen_para()
 		fprintf(mips, "\tmove  $t3, $sp\n");//½«sp´æÈëÁÙÊ±±äÁ¿£¬ÔÚparaÖÐ²»ÔÙÐÞ¸Äsp£¬¸ÄÎªÐÞ¸Ät3
 	}
 	fprintf(mips, "\taddi  $t3, $t3,  -4\n");//ÒÆ¶¯Õ»Ö¸Õë
-	fprintf(mips, "\tsw  $s0, 0($t3)\n");//´æÈë²ÎÊý
+	fprintf(mips, "\tsw  $%s, 0($t3)\n",op1);//´æÈë²ÎÊý
 	para_cnt++;
 }
 void gen_call()

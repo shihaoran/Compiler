@@ -66,6 +66,7 @@ void gen_call();
 void gen_nop();
 int save_result(char *opr);
 int handle_op(char *op1, char *op2);
+char* handle_result(char* opr);
 /*======================END==========================*/
 
 /*=================优化部分===================*/
@@ -101,6 +102,7 @@ char* find_reg(char *op);
 #define MAX_BLOCK_LEN 128 //用于优化的基本块最长值
 #define MAX_DEFUSE_NUM 32 //用于活跃变量分析
 #define MAX_PREV_NUM 32 //用于活跃变量分析
+#define MAX_NUM_LEN 4 //用于活跃变量分析
 
 /*=================生成四元式部分===================*/
 
