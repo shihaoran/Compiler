@@ -79,6 +79,8 @@ int div_func(int i);
 void const_propagation();
 void process_block(int start, int end);
 int process_quat(struct quat_record *quat, int t);
+void always_jmp();
+void never_jmp();
 int invalid_const_table(char* op);
 int update_const_table(char* op, int type, int value, int value_type);
 int const_find_value(char* op, int* value, int* index);
@@ -248,11 +250,14 @@ int label_ptr = 0;//当前label指针
 int c_local_ptr = 0;//常量表局部常量起始位置
 int c_var_ptr = 0;//常量表变量起始位置
 int c_ptr = 0;//常量表顶指针
-int func_ptr = 0;//函数指针
+int func_ptr = 0;//函数指针,生成block时,后来不减
+int _func_ptr = 0;
+int _block_ptr = 0;
 
 
 /********一些全局变量*******/
 int in_func = 0;//是否在函数内，0为否1为真
+int is_deadcode;
 int has_return;//是否有return语句
 extern int num;//词法分析中生成的数字
 extern char c;//词法分析中生成的字符

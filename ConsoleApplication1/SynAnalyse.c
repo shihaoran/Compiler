@@ -3197,8 +3197,13 @@ void quat_opt()
 {
 	int _is = 0;
 	int i,j=0;
-	printf("ÊÇ·ñÒª×öËÄÔªÊ½ÓÅ»¯£¿¡¾1ÊÇ/0·ñ¡¿");
-	scanf("%d",&_is);
+	while (1)
+	{
+		printf("ÊÇ·ñÒª×öËÄÔªÊ½ÓÅ»¯£¿¡¾1ÊÇ/0·ñ¡¿");
+		scanf("%d", &_is);
+		if (_is == 0 || _is == 1)
+			break;
+	}
 	if (_is)
 	{
 		quat_out = fopen("quat_opt.txt", "w");
@@ -3209,8 +3214,20 @@ void quat_opt()
 	{
 		return;
 	}
-	printf("ÊÇ·ñÒª×ö³£Êı´«²¥ÓÅ»¯£¿¡¾1ÊÇ/0·ñ¡¿");
-	scanf("%d", &_is);
+	while (1)
+	{
+		printf("ÊÇ·ñÒª×ö³£Êı´«²¥ÓÅ»¯£¿¡¾1ÊÇ/0·ñ¡¿");
+		scanf("%d", &_is);
+		if (_is == 0 || _is == 1)
+			break;
+	}
+	while (1)
+	{
+		printf("ÊÇ·ñÒª×öËÀ´úÂëÉ¾³ı£¿¡¾1ÊÇ/0·ñ¡¿");
+		scanf("%d", &is_deadcode);
+		if (is_deadcode == 0 || is_deadcode == 1)
+			break;
+	}
 	if (_is)
 	{
 		const_propagation();
@@ -3346,6 +3363,21 @@ int div_func(int i)
 						}
 						//Ìí¼ÓÇ°Çı
 						insert_block_prev(k, i);
+						//Ìí¼ÓÕâ¿éÉÏÒ»ÌõµÄÇ°Çı
+						if (optquat_table[j - 1].op != RET&&optquat_table[j - 1].op != FUNC&&optquat_table[j - 1].op != MAINFUNC)
+						{
+							if (optquat_table[j - 1].op == JMP)
+							{
+								if (!strcmp(optquat_table[j - 1].opr, label))
+								{
+									insert_block_prev(k, j-1);
+								}
+							}
+							else
+							{
+								insert_block_prev(k, j - 1);
+							}
+						}
 						break;
 					}
 				}
@@ -3410,6 +3442,7 @@ void const_propagation()
 	c_local_ptr = c_ptr;//½øÈëº¯Êı£¬ÖÃ³£Á¿±íÖ¸Õë
 	for (i = 0; i < func_ptr; i++)
 	{
+		_func_ptr = i;
 		while (optquat_ptr < block_table[i][0].start)
 		{
 			if (optquat_table[optquat_ptr].op == CONST)
@@ -3421,6 +3454,7 @@ void const_propagation()
 		c_var_ptr = c_ptr;//½øÈë¿é£¬ÖÃ³£Á¿±íÖ¸Õë
 		for (j = 0; block_table[i][j].start != -1; j++)
 		{
+			_block_ptr = j;
 			process_block(block_table[i][j].start, block_table[i][j].end);
 		}
 		optquat_ptr = block_table[i][j-1].end;
@@ -3431,7 +3465,8 @@ void process_block(int start, int end)
 	int i;
 	for (i = start; i <= end; i++)
 	{
-		process_quat(&optquat_table[i], 0);
+		if(!optquat_table[i].is_empty)//¿Õ¾Í²»´¦Àí£¬µ«ÊÇÒª¼ÓËÄÔªÊ½Éú³ÉÖ¸Õë
+			process_quat(&optquat_table[i], 0);
 		optquat_ptr++;
 	}
 	c_ptr = c_var_ptr;//´¦ÀíÍê¿éºóÉ¾³ı¿é¼¶±äÁ¿³£Á¿
@@ -3609,11 +3644,61 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 			if (flag1&&flag2)
 			{
 				if (quat->op == JE || quat->op == JNE ||
-					quat->op == JZ || quat->op == JNZ ||
 					quat->op == JG || quat->op == JGE ||
 					quat->op == JL || quat->op == JLE || quat->op == CJNE)
 				{
-					return;//TODO:ÕâÀï×öËÀ´úÂëÉ¾³ı
+					if (!is_deadcode)
+					{
+						return;
+					}
+					//TODO:ÕâÀï×öËÀ´úÂëÉ¾³ı
+					switch (quat->op)
+					{
+						case JE:
+							if (value1 == value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						case JNE:
+							if (value1 != value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						case JG:
+							if (value1 > value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						case JGE:
+							if (value1 >= value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						case JL:
+							if (value1 < value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						case JLE:
+							if (value1 <= value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						case CJNE:
+							if (value1 != value2)
+								always_jmp();
+							else
+								never_jmp();
+							break;
+						default:
+							break;
+					}
 				}
 				else if (quat->op == ADD)
 				{
@@ -3672,7 +3757,7 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 					update_const_table(quat->opr, 0, value, 0);
 				}
 			}
-			else if (flag1&& (quat->op == NEG || quat->op == MOV))//´¦ÀíNEG,MOV
+			else if (flag1 && (quat->op == NEG || quat->op == MOV))//´¦ÀíNEG,MOV
 			{
 				if (quat->op == NEG)
 				{
@@ -3723,6 +3808,31 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 					update_const_table(quat->opr, 0, value, 0);
 				}
 			}
+			else if (flag1 && (quat->op == JZ || quat->op == JNZ))
+			{
+				if (!is_deadcode)
+				{
+					return;
+				}
+				//TODO:ÕâÀï×öËÀ´úÂëÉ¾³ı
+				switch (quat->op)
+				{
+				case JZ:
+					if (value1 == 0)
+						always_jmp();
+					else
+						never_jmp();
+					break;
+				case JNZ:
+					if (value1 != 0)
+						always_jmp();
+					else
+						never_jmp();
+					break;
+				default:
+					break;
+				}
+			}
 			else//ÕâÊÇÓ¦¸ÃÉ¾³ı£¬ÒòÎª¸³ÁË·Ç³£ÊıÁ¿
 			{
 				invalid_const_table(quat->opr);
@@ -3730,6 +3840,44 @@ int process_quat(struct quat_record *quat,int t)//tÎª2±íÊ¾ÊÇÈ«¾Ö³£ÊıËÄÔªÊ½£¬1±íÊ
 		}
 	}
 }
+
+void always_jmp()//ÓÃÓÚËÀ´úÂëÉ¾³ı
+{
+	int i,j;
+	optquat_table[optquat_ptr].is_empty = 1;
+	for (i = _block_ptr + 1; i < block_table[_func_ptr][_block_ptr].next_2; i++)
+	{
+		block_table[_func_ptr][i].prev_len = 0;//Çå¿ÕÇ°Çı
+		block_table[_func_ptr][i].next_1 = -1;
+		block_table[_func_ptr][i].next_2 = -1;//Çå¿Õºó¼Ì
+		for (j = block_table[_func_ptr][i].start; j <= block_table[_func_ptr][i].end; j++)
+			optquat_table[j].is_empty = 1;
+	}
+	optquat_table[block_table[_func_ptr][i].start].label = -1;//É¾³ıÌø×ªµ½µÄ±êÇ©
+}
+
+void never_jmp()//ÓÃÓÚËÀ´úÂëÉ¾³ı
+{
+	int i,j;
+	int n = block_table[_func_ptr][_block_ptr].next_2;
+	block_table[_func_ptr][_block_ptr].next_2 = -1;//É¾next
+	optquat_table[optquat_ptr].is_empty = 1;
+	for (i = 0; i < block_table[_func_ptr][n].prev_len; i++)
+	{
+		if (block_table[_func_ptr][n].prev[i] == optquat_ptr)
+		{
+			j = i;
+			while (j < block_table[_func_ptr][n].prev_len - 1)//É¾³ıprevºóÇ°ÒÆ
+			{
+				block_table[_func_ptr][n].prev[j] = block_table[_func_ptr][n].prev[j + 1];
+				j++;
+			}
+			block_table[_func_ptr][n].prev_len--;//³¤¶È-1
+		}
+	}
+	optquat_table[block_table[_func_ptr][n].start].label = -1;//É¾³ıÌø×ªµ½µÄ±êÇ©
+}
+
 int invalid_const_table(char* op)
 {
 	int v, index;
