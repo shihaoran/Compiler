@@ -2296,11 +2296,11 @@ void gen_mips()
 int handle_result(char* opr)
 {
 	int i, num;
-	char temp_num[MAX_NUM_LEN] = "";
+	char temp_num[MAX_OP_LEN] = "";
 	char temp[MAX_OP_LEN] = "";
 	if (opr[0] == '#')//Èç¹ûÊÇ¼Ä´æÆ÷
 	{
-		for (i = 1; isdight(opr[i]); i++)
+		for (i = 1; isdigit(opr[i]); i++)
 			temp_num[i - 1] = opr[i];
 		num = atoi(temp_num);
 		sprintf(opr, "%s", reg_name[num]);
@@ -2319,17 +2319,17 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 	int flag2 = 0;
 	int flag_reg = 1;
 	int i;
-	char temp_num[MAX_NUM_LEN]="";
+	char temp_regnum1[MAX_OP_LEN] = "";
+	char temp_regnum2[MAX_OP_LEN] = "";
 	int num;
 	if (strcmp(op1,""))//Èç¹ûop1²»Îª¿Õ
 	{
 		flag1 = 1;
 		if (op1[0] == '#')//Èç¹ûÊÇ¼Ä´æÆ÷
 		{
-			temp_num[MAX_NUM_LEN] = "";
-			for (i = 1; isdight(op1[i]); i++)
-				temp_num[i - 1] = op1[i];
-			num = atoi(temp_num);
+			for (i = 1; isdigit(op1[i]); i++)
+				temp_regnum1[i - 1] = op1[i];
+			num = atoi(temp_regnum1);
 			sprintf(op1, "%s", reg_name[num]);
 			flag_reg = 0;
 		}
@@ -2405,6 +2405,22 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 					fprintf(mips, "\tlw  $t0, %d($fp)\n", (-index - 14) * 4);//È¡¾Ö²¿±äÁ¿ÖµÎªÔªËØÆ«ÒÆÁ¿
 					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
 					fprintf(mips, "\tmult  $t0, $t2\n");//*4
+					fprintf(mips, "\tmflo  $t0\n");//È¡½á¹û
+					fprintf(mips, "\taddi  $t1, $0,  %d\n", (-offset - 14) * 4);//Êý×é»ùµØÖ·Æ«ÒÆÁ¿
+					fprintf(mips, "\tsub  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
+					fprintf(mips, "\tadd  $t1, $fp,  $t1\n");//¼ÓÉÏ»ùµØÖ·
+					fprintf(mips, "\tlw  $s0, 0($t1)\n");
+				}
+				else if (op1[i] == '#')//ÊÇ´æÔÚ¼Ä´æÆ÷ÖÐµÄ¾Ö²¿±äÁ¿
+				{
+					for (i = i + 1; op1[i] != ']'; i++)
+					{
+						temp_num[j++] = op1[i];
+					}
+					temp_num[j] = '\0';
+					index = atoi(temp_num);
+					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
+					fprintf(mips, "\tmult  $%s, $t2\n", reg_name[index]);//¼Ä´æÆ÷*4
 					fprintf(mips, "\tmflo  $t0\n");//È¡½á¹û
 					fprintf(mips, "\taddi  $t1, $0,  %d\n", (-offset - 14) * 4);//Êý×é»ùµØÖ·Æ«ÒÆÁ¿
 					fprintf(mips, "\tsub  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
@@ -2497,6 +2513,21 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 					fprintf(mips, "\tadd  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
 					fprintf(mips, "\tlw  $s0, 0($t1)\n");
 				}
+				else if (op1[i] == '#')//ÊÇ´æÔÚ¼Ä´æÆ÷ÖÐµÄ¾Ö²¿±äÁ¿
+				{
+					for (i = i + 1; op1[i] != ']'; i++)
+					{
+						temp_num[j++] = op1[i];
+					}
+					temp_num[j] = '\0';
+					index = atoi(temp_num);
+					fprintf(mips, "\tla  $t0, %s\n", temp_name);//È¡È«¾ÖÁ¿µØÖ·
+					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
+					fprintf(mips, "\tmult  $%s, $t2\n", reg_name[index]);//¼Ä´æÆ÷*4
+					fprintf(mips, "\tmflo  $t1\n");//È¡½á¹û
+					fprintf(mips, "\tadd  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
+					fprintf(mips, "\tlw  $s0, 0($t1)\n");
+				}
 				else if (op1[i] == '$')//ÊÇÁÙÊ±±äÁ¿
 				{
 					for (i = i + 1; op1[i] != ']'; i++)
@@ -2563,15 +2594,16 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 	if (strcmp(op2, ""))//Èç¹ûop2²»Îª¿Õ
 	{
 		flag2 = 1;
+		flag_reg = 1;
 		if (op2[0] == '#')//Èç¹ûÊÇ¼Ä´æÆ÷
 		{
-			temp_num[MAX_NUM_LEN] = "";
-			for (i = 1; isdight(op2[i]); i++)
-				temp_num[i - 1] = op2[i];
-			num = atoi(temp_num);
+			for (i = 1; isdigit(op2[i]); i++)
+				temp_regnum2[i - 1] = op2[i];
+			num = atoi(temp_regnum2);
 			sprintf(op2, "%s", reg_name[num]);
+			flag_reg = 0;
 		}
-		if (op2[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
+		else if (op2[0] == '%')//Èç¹ûÊÇ¾Ö²¿±äÁ¿
 		{
 			op2[0] = '0';
 			offset = atoi(op2);
@@ -2614,7 +2646,8 @@ int handle_op(char *op1,char *op2)//Éú³ÉopËù¶ÔÓ¦µÄ»úÆ÷Âë£¬½«½á¹û´æÔÚs0,s1¼Ä´æÆ÷Ö
 			fprintf(mips, "\tlw  $s1, 0($t0)\n");//´æÈës1ÖÐ
 
 		}
-		sprintf(op2, "s1");
+		if (flag_reg)
+			sprintf(op2, "s1");//Èç¹û²»ÊÇ·ÖÅä¼Ä´æÆ÷µÄ±äÁ¿£¬´æÔÚs1ÖÐ
 	}
 	if (flag1&&flag2)
 		return 2;
@@ -2695,6 +2728,22 @@ int save_result(char *opr)//´æ½á¹û£¬½«s2¼Ä´æÆ÷ÖÐµÄÖµ´æµ½½á¹ûÖÐ
 					fprintf(mips, "\tlw  $t0, %d($fp)\n", (-index - 14) * 4);//È¡¾Ö²¿±äÁ¿ÖµÎªÔªËØÆ«ÒÆÁ¿
 					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
 					fprintf(mips, "\tmult  $t0, $t2\n");//*4
+					fprintf(mips, "\tmflo  $t0\n");//È¡½á¹û
+					fprintf(mips, "\taddi  $t1, $0,  %d\n", (-offset - 14) * 4);//Êý×é»ùµØÖ·Æ«ÒÆÁ¿
+					fprintf(mips, "\tsub  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
+					fprintf(mips, "\tadd  $t1, $fp,  $t1\n");//¼ÓÉÏ»ùµØÖ·
+					fprintf(mips, "\tsw  $s2, 0($t1)\n");
+				}
+				else if (opr[i] == '#')//ÊÇ´æÔÚ¼Ä´æÆ÷ÖÐµÄ¾Ö²¿±äÁ¿
+				{
+					for (i = i + 1; opr[i] != ']'; i++)
+					{
+						temp_num[j++] = opr[i];
+					}
+					temp_num[j] = '\0';
+					index = atoi(temp_num);
+					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
+					fprintf(mips, "\tmult  $%s, $t2\n",reg_name[index]);//¼Ä´æÆ÷*4
 					fprintf(mips, "\tmflo  $t0\n");//È¡½á¹û
 					fprintf(mips, "\taddi  $t1, $0,  %d\n", (-offset - 14) * 4);//Êý×é»ùµØÖ·Æ«ÒÆÁ¿
 					fprintf(mips, "\tsub  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
@@ -2783,6 +2832,21 @@ int save_result(char *opr)//´æ½á¹û£¬½«s2¼Ä´æÆ÷ÖÐµÄÖµ´æµ½½á¹ûÖÐ
 					fprintf(mips, "\tlw  $t1, %d($fp)\n", (-index - 14) * 4);//È¡¾Ö²¿±äÁ¿ÖµÎªÔªËØÆ«ÒÆÁ¿
 					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
 					fprintf(mips, "\tmult  $t1, $t2\n");//*4
+					fprintf(mips, "\tmflo  $t1\n");//È¡½á¹û
+					fprintf(mips, "\tadd  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
+					fprintf(mips, "\tsw  $s2, 0($t1)\n");
+				}
+				else if (opr[i] == '#')//ÊÇ´æÔÚ¼Ä´æÆ÷ÖÐµÄ¾Ö²¿±äÁ¿
+				{
+					for (i = i + 1; opr[i] != ']'; i++)
+					{
+						temp_num[j++] = opr[i];
+					}
+					temp_num[j] = '\0';
+					index = atoi(temp_num);
+					fprintf(mips, "\tla  $t0, %s\n", temp_name);//È¡È«¾ÖÁ¿µØÖ·
+					fprintf(mips, "\taddi  $t2, $0,  4\n");//Á¢¼´Êý4
+					fprintf(mips, "\tmult  $%s, $t2\n",reg_name[index]);//¼Ä´æÆ÷*4
 					fprintf(mips, "\tmflo  $t1\n");//È¡½á¹û
 					fprintf(mips, "\tadd  $t1, $t1,  $t0\n");//×ÜÆ«ÒÆÁ¿
 					fprintf(mips, "\tsw  $s2, 0($t1)\n");
@@ -4169,22 +4233,21 @@ void reference_cnt()
 			{
 				if (optquat_table[p].is_empty)
 					continue;
-				if (optquat_table[p].op1[0] == '%')
+				if (optquat_table[p].op1[0] == '%' || optquat_table[p].op1[0] == '&')
 				{
 					strcpy(optquat_table[p].op1,find_reg(optquat_table[p].op1));
 				}
-				if (optquat_table[p].op2[0] == '%')
+				if (optquat_table[p].op2[0] == '%' || optquat_table[p].op2[0] == '&')
 				{
 					strcpy(optquat_table[p].op2, find_reg(optquat_table[p].op2));
 				}
-				if (optquat_table[p].opr[0] == '%')
+				if (optquat_table[p].opr[0] == '%' || optquat_table[p].opr[0] == '&')
 				{
 					strcpy(optquat_table[p].opr, find_reg(optquat_table[p].opr));
 				}
 			}
 		}
 	}
-	printf("d");
 }
 void insert_cnt_table(char *op)
 {
@@ -4204,13 +4267,43 @@ void insert_cnt_table(char *op)
 char* find_reg(char *op)
 {
 	int i;
+	int j = 0;
+	int flag = 0;
+	char temp_name[MAX_OP_LEN] = "";
+	char temp_num[MAX_OP_LEN] = "";
+	char temp_whole[MAX_OP_LEN] = "";
 	char ret[MAX_OP_LEN];
+	if (op[0] == '&')
+	{
+		for (i = 0; op[i] != '['; i++)
+		{
+			temp_name[i] = op[i];
+		}
+		for (i = i + 1; op[i] != ']'; i++)
+		{
+			temp_num[j++] = op[i];
+		}
+		flag = 1;
+	}
+	else if (op[0] == '%')
+	{
+		strcpy(temp_num, op);
+	}
 	for (i = 0; i < REG_NUM; i++)
 	{
-		if (!strcmp(op, cnt_table[_func_ptr][i].op))
+		if (!strcmp(temp_num, cnt_table[_func_ptr][i].op))
 		{
 			sprintf(ret, "#%d", i);
-			return ret;
+			if (flag)//Êý×éÏÂ±êÊÇ·ÖÅä¼Ä´æÆ÷µÄ¾Ö²¿±äÁ¿
+			{
+				strcat(temp_whole, temp_name);
+				strcat(temp_whole, "[");
+				strcat(temp_whole, ret);
+				strcat(temp_whole, "]");
+				return temp_whole;
+			}
+			else
+				return ret;
 		}
 	}
 	strcpy(ret, op);

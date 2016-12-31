@@ -66,7 +66,7 @@ void gen_call();
 void gen_nop();
 int save_result(char *opr);
 int handle_op(char *op1, char *op2);
-char* handle_result(char* opr);
+int handle_result(char* opr);
 /*======================END==========================*/
 
 /*=================优化部分===================*/
