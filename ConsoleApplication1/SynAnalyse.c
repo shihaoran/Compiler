@@ -3232,6 +3232,17 @@ void quat_opt()
 	{
 		const_propagation();
 	}
+	while (1)
+	{
+		printf("是否要做引用计数全局寄存器分配？【1是/0否】");
+		scanf("%d", &_is);
+		if (_is == 0 || _is == 1)
+			break;
+	}
+	if (_is)
+	{
+		reference_cnt();
+	}
 	print_opt_quat();
 	fclose(quat_out);
 	for (i = 0; optquat_table[i].op != EOMAINFUNC; i++)
@@ -3954,6 +3965,105 @@ int const_find_value(char* op,int* value,int* index)//找常量值，1找到0没找到
 		}
 	}
 	return 0;
+}
+/********引用计数优化部分*******/
+void reference_cnt()
+{
+	int i, j,k,start,end;
+	int p;//遍历四元式指针
+	struct count_record tmp;
+	for(i=0;i<MAX_FUNC_LEN;i++)//初始化计数表
+		cnt_tablelen[i] = 0;
+	for (i = 0; i < func_ptr; i++)
+	{
+		_func_ptr = i;
+		start = block_table[i][0].start;
+		j = 0;
+		while (block_table[i][j].start != -1)
+			j++;
+		end = block_table[i][j - 1].end;
+		for (p = start; p <= end; p++)
+		{
+			if (optquat_table[p].is_empty)
+				continue;
+			if (optquat_table[p].op1[0] == '%')
+			{
+				insert_cnt_table(optquat_table[p].op1);
+			}
+			if (optquat_table[p].op2[0] == '%')
+			{
+				insert_cnt_table(optquat_table[p].op2);
+			}
+			if (optquat_table[p].opr[0] == '%')
+			{
+				insert_cnt_table(optquat_table[p].opr);
+			}
+		}
+		for (j = 0; j < cnt_tablelen[i]; j++)  //计数冒泡排序
+		{
+			for (k = cnt_tablelen[i] - 1; k > j; k--)
+			{
+				if (cnt_table[i][k].cnt > cnt_table[i][k - 1].cnt)
+				{
+					tmp_rf = cnt_table[i][k];
+					cnt_table[i][k] = cnt_table[i][k - 1];
+					cnt_table[i][k - 1] = tmp_rf;
+				}
+			}
+		}
+		//改动四元式#n,n代表寄存器号
+		if (cnt_tablelen[_func_ptr] > 0)
+		{
+			for (p = start; p <= end; p++)
+			{
+				if (optquat_table[p].is_empty)
+					continue;
+				if (optquat_table[p].op1[0] == '%')
+				{
+					strcpy(optquat_table[p].op1,find_reg(optquat_table[p].op1));
+				}
+				if (optquat_table[p].op2[0] == '%')
+				{
+					strcpy(optquat_table[p].op2, find_reg(optquat_table[p].op2));
+				}
+				if (optquat_table[p].opr[0] == '%')
+				{
+					strcpy(optquat_table[p].opr, find_reg(optquat_table[p].opr));
+				}
+			}
+		}
+	}
+	printf("d");
+}
+void insert_cnt_table(char *op)
+{
+	int i;
+	for (i = 0; i < cnt_tablelen[_func_ptr]; i++)
+	{
+		if (!strcmp(cnt_table[_func_ptr][i].op, op))
+		{
+			cnt_table[_func_ptr][i].cnt++;
+			return;
+		}
+	}
+	strcpy(cnt_table[_func_ptr][cnt_tablelen[_func_ptr]].op, op);
+	cnt_table[_func_ptr][cnt_tablelen[_func_ptr]].cnt++;
+	cnt_tablelen[_func_ptr]++;
+}
+char* find_reg(char *op)
+{
+	int i;
+	char ret[MAX_OP_LEN];
+	for (i = 0; i < REG_NUM; i++)
+	{
+		if (!strcmp(op, cnt_table[_func_ptr][i].op))
+		{
+			sprintf(ret, "#%d", i);
+			return ret;
+		}
+	}
+	strcpy(ret, op);
+	return ret;
 }
 
 int main()

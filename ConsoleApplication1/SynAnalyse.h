@@ -84,6 +84,9 @@ void never_jmp();
 int invalid_const_table(char* op);
 int update_const_table(char* op, int type, int value, int value_type);
 int const_find_value(char* op, int* value, int* index);
+void reference_cnt();
+void insert_cnt_table(char *op);
+char* find_reg(char *op);
 /*======================END==========================*/
 
 #define MAX_ID_LEN 128 //标识符最长值
@@ -235,6 +238,21 @@ struct block_record
 	int def[MAX_DEFUSE_NUM];
 	int use[MAX_DEFUSE_NUM];
 } block_table[MAX_FUNC_LEN][MAX_BLOCK_LEN],temp;
+
+/********引用计数数据结构*******/
+struct count_record
+{
+	char op[MAX_OP_LEN];
+	int cnt;
+} cnt_table[MAX_FUNC_LEN][MAX_QUAT_LEN],tmp_rf;
+
+int cnt_tablelen[MAX_FUNC_LEN];
+
+const char * reg_name[] = {
+	"s3","s4","s5","s6","s7"
+};
+
+#define REG_NUM 5//分配的寄存器数量
 
 /********定义各种指针*******/
 int sym_ptr = 0;//当前符号表尽头指针
